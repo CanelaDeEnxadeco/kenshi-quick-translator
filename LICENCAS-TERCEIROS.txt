@@ -1,0 +1,19 @@
+Kenshi Quick Translator usa ou foi escrito a partir de projetos abertos. Mantenha este arquivo junto do programa.
+
+1) kenshi-translator-toolkit - AlexPrestes - licenca MIT
+   https://github.com/AlexPrestes/kenshi-translator-toolkit
+   (leitura e escrita do formato .mod; incluido no programa)
+   Esse projeto usa o algoritmo do MOD Translation Helper, de kongyo11.
+
+2) KenshiTranslator - Kakrain - licenca MIT
+   https://github.com/Kakrain/KenshiTranslator
+   (ideia original; servicos gratuitos e modo agregado reescritos em Python a partir do codigo aberto)
+
+3) GTranslate - d4n3436 - licenca MIT
+   https://github.com/d4n3436/GTranslate
+   (formato das chamadas dos servicos gratuitos, reescrito em Python)
+
+4) Python, Tkinter, PyInstaller e Pillow (quando presentes no .exe) seguem as licencas proprias de cada um.
+
+O texto da licenca MIT esta no arquivo LICENSE. Os avisos de copyright de cada projeto acima estao
+nos repositorios indicados; confira e copie-os aqui se for redistribuir.

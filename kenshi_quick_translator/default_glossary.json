@@ -1,0 +1,18 @@
+{
+  "_aviso": "Sugestoes iniciais, edite a vontade. Valor null = nao traduzir. Os termos em portugues sao sugestoes minhas e nao uma lista oficial.",
+  "case_sensitive": true,
+  "terms": {
+    "Holy Nation": "Nação Sagrada",
+    "Shek Kingdom": "Reino Shek",
+    "United Cities": "Cidades Unidas",
+    "Hive": "Colmeia",
+    "Skin Bandits": null,
+    "Swamp Ninjas": null,
+    "Flotsam Ninjas": null,
+    "Fogmen": null,
+    "Hashish": null,
+    "Hub": null,
+    "Squin": null,
+    "Stobe": null
+  }
+}

@@ -1,0 +1,22 @@
+KENSHI TRADUTOR
+Traduza mods de Kenshi rapidamente, sem estragar os codigos do jogo.
+
+COMO USAR
+1. Abra o KenshiQuickTranslator.exe (nao precisa instalar nada).
+2. Escolha o mod na lista e o idioma de destino.
+3. Clique em Traduzir. Pode fechar e continuar depois.
+4. Revise as linhas que quiser, depois clique em Instalar no jogo.
+   O mod traduzido fica com o MESMO nome do original; o original e guardado como
+   "<nome>.mod.original" na pasta do mod. Para desfazer: botao "Restaurar o original".
+
+ONDE FICAM SEUS DADOS
+%APPDATA%\KenshiQuickTranslator\  (projetos, memoria de traducao, configuracao, glossario)
+
+ALERTA DO ANTIVIRUS
+O programa e feito em Python e empacotado com PyInstaller. Esse tipo de .exe as vezes
+e marcado por engano. Foi gerado sem UPX para reduzir isso. Se preferir, rode pelo codigo-fonte.
+
+CREDITOS
+Inspirado no Kenshi Translator, de Kakrain.
+Leitura e escrita do .mod: kenshi-translator-toolkit, de AlexPrestes (MIT).
+Veja LICENCAS-TERCEIROS.txt.
