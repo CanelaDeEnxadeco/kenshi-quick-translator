@@ -18,8 +18,7 @@
 
 A Windows desktop program that **reads the `.mod` file**, **translates every text** (dialogue, names, descriptions…), lets you **review it side by side**, and **installs the translation straight into Kenshi** — without ever touching the original file.
 
-<!-- 📸 PUT A MAIN-SCREEN SCREENSHOT HERE: docs/img/main-screen.png -->
-<!-- ![Main screen](docs/img/main-screen.png) -->
+<img src="docs/img/main-screen.png" alt="Main screen" width="900">
 
 </div>
 
@@ -68,21 +67,21 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 
 ## 🖼️ Screenshots
 
-> 📸 *Add your screenshots to the `docs/img/` folder and uncomment the lines below.*
-
-<!--
-| Mod list | How to translate |
+| Guided tour | Review |
 |---|---|
-| ![List](docs/img/mod-list.png) | ![Translate](docs/img/how-to-translate.png) |
+| ![Tour](docs/img/guided-tour.png) | ![Review](docs/img/review.png) |
 
-| Review | Settings |
+| Settings | Font size |
 |---|---|
-| ![Review](docs/img/review.png) | ![Settings](docs/img/settings.png) |
+| ![Settings](docs/img/settings.png) | ![Font size](docs/img/font-size.png) |
 
-| Aggregate services | Dark mode |
+| Dark theme | Chinese interface |
 |---|---|
-| ![Services](docs/img/services.png) | ![Dark](docs/img/dark-mode.png) |
--->
+| ![Dark](docs/img/dark-mode.png) | ![Chinese](docs/img/chinese.png) |
+
+| Russian interface |
+|---|
+| ![Russian](docs/img/russian.png) |
 
 ---
 

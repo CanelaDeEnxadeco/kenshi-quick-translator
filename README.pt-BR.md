@@ -18,8 +18,7 @@
 
 Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos** (diálogos, nomes, descrições…), deixa você **revisar lado a lado** e **instala a tradução direto no Kenshi**, sem nunca alterar o arquivo original.
 
-<!-- 📸 COLOQUE AQUI um print da tela principal: docs/img/tela-principal.png -->
-<!-- ![Tela principal](docs/img/tela-principal.png) -->
+<img src="docs/img/main-screen.png" alt="Tela principal" width="900">
 
 </div>
 
@@ -68,21 +67,21 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 
 ## 🖼️ Capturas de tela
 
-> 📸 *Adicione aqui os seus prints na pasta `docs/img/` e descomente as linhas abaixo.*
-
-<!--
-| Lista de mods | Como traduzir |
+| Tour guiado | Revisão |
 |---|---|
-| ![Lista](docs/img/lista-de-mods.png) | ![Traduzir](docs/img/como-traduzir.png) |
+| ![Tour](docs/img/guided-tour.png) | ![Revisão](docs/img/review.png) |
 
-| Revisão | Configurações |
+| Configurações | Tamanho da letra |
 |---|---|
-| ![Revisão](docs/img/revisao.png) | ![Configurações](docs/img/configuracoes.png) |
+| ![Configurações](docs/img/settings.png) | ![Letra](docs/img/font-size.png) |
 
-| Serviços do agregado | Modo escuro |
+| Tema escuro | Interface em chinês |
 |---|---|
-| ![Serviços](docs/img/servicos.png) | ![Escuro](docs/img/modo-escuro.png) |
--->
+| ![Escuro](docs/img/dark-mode.png) | ![Chinês](docs/img/chinese.png) |
+
+| Interface em russo |
+|---|
+| ![Russo](docs/img/russian.png) |
 
 ---
 
