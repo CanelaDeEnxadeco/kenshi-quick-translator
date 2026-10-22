@@ -231,8 +231,12 @@ def find_game_language_dir(kenshi_dir: str | Path | None, target: str) -> Path |
             if not matches_language(d.name, "", target):
                 continue
             n = sum(1 for f in d.rglob("*") if f.is_file() and f.suffix.lower() in (".mo", ".translation"))
-            if n and (best is None or n > best[0]):
-                best = (n, d)
+            if not n:
+                continue
+            exact = _norm(d.name).replace("_", "-") == _norm(target).replace("_", "-")
+            score = n + (10_000 if exact else 0)  # nome igual ao do idioma (pt_BR p/ pt-BR) vence sigla só da língua
+            if best is None or score > best[0]:
+                best = (score, d)
     return best[1] if best else None
 
 

@@ -168,6 +168,29 @@ class PacoteDeIdioma(unittest.TestCase):
             self.assertEqual(build_locale_pack(dest, Path(t) / "nada", None, "pt-BR", "en"), {})
 
 
+class OutrosIdiomas(unittest.TestCase):
+    def test_russo_chines_e_variantes(self):
+        from kenshi_quick_translator.localefiles import build_locale_pack, find_game_language_dir
+        with tempfile.TemporaryDirectory() as t:
+            kenshi, dest = PacoteDeIdioma()._montar(Path(t))
+            for nome, lang in (("ru_RU", "ru"), ("zh_CN", "zh")):
+                d = kenshi / "locale" / nome
+                (d / "LC_MESSAGES").mkdir(parents=True)
+                (d / "main.mo").write_bytes(mo({"Katanas": "K", "Male": "M"}, f"Content-Type: text/plain; charset=UTF-8\nLanguage: {lang}\n"))
+                (d / "gamedata.mo").write_bytes(b"X")
+            (kenshi / "locale" / "pt_PT").mkdir()
+            (kenshi / "locale" / "pt_PT" / "main.mo").write_bytes(mo({"Male": "Macho"}))
+            self.assertEqual(find_game_language_dir(kenshi, "ru").name, "ru_RU")
+            self.assertEqual(find_game_language_dir(kenshi, "zh").name, "zh_CN")
+            self.assertEqual(find_game_language_dir(kenshi, "pt-BR").name, "pt_BR")
+            for alvo, pasta in (("ru", "ru_RU"), ("zh", "zh_CN")):
+                files = build_locale_pack(dest, kenshi, Fake(), alvo, "en")
+                self.assertIn(f"locale/{pasta}/gamedata.mo", files)
+                cat = mofile.read_mo(files[f"locale/{pasta}/main.mo"])
+                self.assertEqual(cat.entries["Male"], "M")
+                self.assertTrue(cat.entries["Katanas"].startswith("PT "))  # veio do mod, traduzido pelo serviço
+
+
 class InstalaPacote(unittest.TestCase):
     def test_instala_e_restaura(self):
         from kenshi_quick_translator.config import Config

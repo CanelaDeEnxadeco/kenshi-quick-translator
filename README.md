@@ -10,7 +10,7 @@
 
 **Translate Kenshi mods quickly, without breaking the game's codes.**
 
-![Version](https://img.shields.io/badge/version-0.6.5-blue)
+![Version](https://img.shields.io/badge/version-0.6.8-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -27,6 +27,7 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 
 ## 📑 Table of contents
 
+- [🆕 What's new](#-whats-new-in-068)
 - [✨ Highlights](#-highlights)
 - [🖼️ Screenshots](#️-screenshots)
 - [🚀 Getting started](#-getting-started)
@@ -46,6 +47,19 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 - [🙏 Credits](#-credits)
 - [⚠️ Known limits](#️-known-limits)
 - [📜 License](#-license)
+
+---
+
+## 🆕 What's new in 0.6.8
+
+- 🗣️ **Mods with a `locale` folder now come out fully translated.** When a mod ships its own `locale` folder (like *Project Kathun*), the game looks for **all** language files there and stops using its own, so menus, dialogue and the start screen stayed in English. Now, on install, the program builds a complete `locale` for the mod from the game's own language pack (`Kenshi/locale/<language>`) and puts the mod's own phrases (e.g. "Lightsabers") translated into it. The mod's original `locale` is kept as `locale_off`, and **Restore the original** brings it back.
+- 💬 **Base-game lines that a mod changes are translated too** (0.6.4). Text-only edits to the game's dialogue and descriptions were skipped before; they are now collected (never the record names), and the rest of the data stays identical.
+- 📝 **Loading tips** (`tips.txt` and other sentence lists in the mod folder) are translated on install (0.6.5). Name lists are left alone.
+- 🌍 **Works for every language, not only Portuguese.** The program looks up the game's own pack for the language you pick (e.g. `Kenshi/locale/pt_BR`, `ru_RU`, `zh_CN`), including fonts, so Russian and Chinese get their fonts and dialogue too. Checked with the official Russian and Chinese packs: all of the mod's phrases are found in both.
+- ⚙️ **Two new switches in Settings → General:** translate the loading tips, and build the full language for mods with a `locale` folder. Both are on by default.
+- 🗣️ Texts of the new options exist in Português, English, Español, Русский and 中文.
+
+> ⚠️ Tested with files and unit tests. If a mod still shows English in game, open an issue with a screenshot and the mod's folder listing.
 
 ---
 
@@ -225,6 +239,7 @@ Shows the name, **how many texts need translating**, and **how many texts of eac
 
 - Puts the translated mod in `Kenshi/mods/<name>/` with the **same name** as the original (it takes the original's place in the game).
 - Keeps the original as `<name>.mod.original`, once.
+- If the mod has a `locale` folder, the installed copy gets a full language pack built from the game's own (see *What's new*); the original `locale` is kept as `locale_off` and **Restore the original** puts it back.
 - Makes sure the mod is enabled in `data/mods.cfg`, **with a backup** of `mods.cfg`.
 - For a Workshop mod, first use **Copy mod to the game folder**: the whole folder is copied (models, textures, `.info`, image).
 - Translating later into **another language** simply swaps the installed translation; the program always reads the original.

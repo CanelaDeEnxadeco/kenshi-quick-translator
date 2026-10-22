@@ -10,7 +10,7 @@
 
 **Traduza mods de Kenshi rapidamente, sem estragar os códigos do jogo.**
 
-![Versão](https://img.shields.io/badge/vers%C3%A3o-0.6.5-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-0.6.8-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-lightgrey)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
@@ -27,6 +27,7 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 
 ## 📑 Índice
 
+- [🆕 Novidades](#-novidades-da-068)
 - [✨ Destaques](#-destaques)
 - [🖼️ Capturas de tela](#️-capturas-de-tela)
 - [🚀 Como usar](#-como-usar)
@@ -46,6 +47,19 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 - [🙏 Créditos](#-créditos)
 - [⚠️ Limites conhecidos](#️-limites-conhecidos)
 - [📜 Licença](#-licença)
+
+---
+
+## 🆕 Novidades da 0.6.8
+
+- 🗣️ **Mods com pasta `locale` agora saem totalmente traduzidos.** Quando o mod traz a própria pasta `locale` (como o *Project Kathun*), o jogo procura ali **todos** os arquivos de idioma e deixa de usar os dele; por isso menu, diálogos e tela de início ficavam em inglês. Agora, ao instalar, o programa monta uma `locale` completa para o mod a partir do pacote de idioma do próprio jogo (`Kenshi/locale/<idioma>`) e põe nela as frases do mod (ex.: "Lightsabers") já traduzidas. A `locale` original do mod fica guardada como `locale_off`, e **Restaurar o original** a devolve.
+- 💬 **Falas do jogo base alteradas pelo mod também são traduzidas** (0.6.4). Edições só de texto em diálogos e descrições do jogo eram puladas; agora são coletadas (nunca o nome dos registros) e o resto dos dados continua idêntico.
+- 📝 **Dicas de carregamento** (`tips.txt` e outras listas de frases na pasta do mod) são traduzidas ao instalar (0.6.5). Listas de nomes ficam como estão.
+- 🌍 **Funciona para qualquer idioma, não só português.** O programa procura o pacote do próprio jogo para o idioma escolhido (ex.: `Kenshi/locale/pt_BR`, `ru_RU`, `zh_CN`), com as fontes, então russo e chinês também recebem fontes e diálogos. Conferido com os pacotes oficiais de russo e chinês: todas as frases do mod existem nos dois.
+- ⚙️ **Duas opções novas em Configurações → Gerais:** traduzir as dicas de carregamento e montar o idioma completo para mods com pasta `locale`. Ambas vêm ligadas.
+- 🗣️ Os textos das opções novas existem em Português, English, Español, Русский e 中文.
+
+> ⚠️ Testado com arquivos e testes automáticos. Se algum mod ainda aparecer em inglês no jogo, abra uma issue com um print e a lista de arquivos da pasta do mod.
 
 ---
 
@@ -225,6 +239,7 @@ Mostra o nome, **quantos textos há para traduzir** e **quantos textos de cada i
 
 - Põe o mod traduzido em `Kenshi/mods/<nome>/` com o **mesmo nome** do original (ele ocupa o lugar do original no jogo).
 - Guarda o original como `<nome>.mod.original`, uma vez só.
+- Se o mod tem pasta `locale`, a cópia instalada recebe um pacote de idioma completo montado a partir do próprio jogo (veja *Novidades*); a `locale` original fica como `locale_off` e **Restaurar o original** a devolve.
 - Garante que o mod está ativo em `data/mods.cfg`, **com backup** do `mods.cfg`.
 - Se o mod é do Workshop, use antes **Copiar mod para a pasta do jogo**: a pasta inteira é copiada (modelos, texturas, `.info`, imagem).
 - Traduzir depois para **outro idioma** simplesmente troca a tradução instalada; o programa lê sempre o original.
