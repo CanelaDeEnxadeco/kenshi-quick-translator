@@ -35,6 +35,8 @@ from .langdetect import detect_language, detect_text, lang_name
 from .locate import KenshiDirs, ModEntry, find_kenshi, is_kenshi_dir, scan_mods
 from .markers import count_markers, has_letters, markers_match
 from .memory import TranslationMemory
+from .localefiles import build_locale_pack
+from .textfiles import find_text_files, translate_text_files
 from .project import ATTENTION, AUTO, IGNORED, PENDING, REVIEWED, Project, Unit, project_path, resolve_project_path
 from .providers import Provider, make_provider
 from .cleanup import CleanResult  # noqa: F401
@@ -97,6 +99,7 @@ class Session:
         self._profiles_lock = threading.Lock()
         self.undo = UndoHistory()
         self.last_install: InstallInfo | None = None
+        self.last_locale_files = 0  # arquivos do pacote de idioma escritos na última instalação
 
     # ------------------------------------------------------------ recursos
     @property
@@ -429,7 +432,9 @@ class Session:
                             res.error = "mod gerado, mas não achei a pasta do Kenshi para instalar"
                         else:
                             res.installed = install_translation_info(dirs.kenshi, res.built.path, proj.mod_name,
-                                                                    Path(path).parent if self.cfg.copy_images else None).dest
+                                                                    Path(path).parent if self.cfg.copy_images else None,
+                                                                    self._text_files(proj.mod_name, dirs, cancel)).dest
+                            self._install_locale(proj.mod_name, dirs, cancel)
             except ProviderBroken as e:
                 res.error = str(e)
                 break  # o serviço está instável: não adianta seguir para os próximos
@@ -455,7 +460,9 @@ class Session:
         if dirs.kenshi is None:
             raise FileNotFoundError("Pasta do Kenshi não encontrada.")
         src = self._original_dir(self.project.mod_name, dirs) if self.cfg.copy_images else None
-        self.last_install = install_translation_info(dirs.kenshi, built, self.project.mod_name, src)
+        self.last_install = install_translation_info(dirs.kenshi, built, self.project.mod_name, src,
+                                                     self._text_files(self.project.mod_name, dirs))
+        self._install_locale(self.project.mod_name, dirs)
         return self.last_install.dest, self.last_install.cfg_changed
 
     def has_original_backup(self) -> bool:
@@ -494,6 +501,68 @@ class Session:
         self.project.save()
         return translate_project(self.project, provider, glossary=self.glossary, memory=None,
                                  options=opts, progress=progress, cancel=cancel)
+
+    def _text_files(self, mod_name: str, dirs: KenshiDirs, cancel=None) -> dict[str, bytes]:
+        """
+        Arquivos da pasta do mod que são traduzidos ao instalar: .txt de frases (ex.: tips.txt) e
+        arquivos de idioma .mo (juntados ao idioma do jogo), cada um se a sua opção estiver ligada.
+        Devolve {caminho relativo à pasta do mod: conteúdo}. Qualquer falha em um item só o deixa
+        como está (copiado do original); nunca impede a instalação.
+        """
+        out: dict[str, bytes] = {}
+        if not self.cfg.translate_text_files:
+            return out
+        try:
+            folder = next((e.path.parent for e in scan_mods(dirs) if e.name == mod_name), None)
+        except Exception:  # noqa: BLE001
+            return out
+        if folder is None:
+            return out
+        provider = None
+        if self.cfg.translate_text_files:
+            try:
+                files = find_text_files(folder)
+                if files:
+                    provider = self.make_provider()
+                    out.update(translate_text_files(files, provider, self.cfg.target_lang, self.cfg.source_lang,
+                                                    self.glossary, self.memory, cancel))
+            except Exception:  # noqa: BLE001
+                pass
+        return out
+
+    def _install_locale(self, mod_name: str, dirs: KenshiDirs, cancel=None) -> int:
+        """
+        Opção do .mo: troca a pasta `locale` do mod instalado pelo pacote de idioma do jogo com as
+        frases do mod traduzidas. A `locale` do mod fica guardada como `locale_off`.
+        Devolve quantos arquivos escreveu (0 = nada mudou). Falhas deixam tudo como estava.
+        """
+        import shutil
+
+        self.last_locale_files = 0
+        if not self.cfg.translate_locale_files or dirs.kenshi is None:
+            return 0
+        dest = Path(dirs.kenshi) / "mods" / Path(mod_name).stem
+        try:
+            if not (dest / "locale").is_dir():
+                return 0
+            src = "en" if self.cfg.source_lang in ("", "auto") else self.cfg.source_lang
+            files = build_locale_pack(dest, dirs.kenshi, self.make_provider(), self.cfg.target_lang, src,
+                                      self.glossary, self.memory, cancel)
+            if not files:
+                return 0
+            loc, off = dest / "locale", dest / "locale_off"
+            if off.exists():  # a original já está guardada: a atual é uma cópia nova ou de uma instalação anterior
+                shutil.rmtree(loc)
+            else:
+                loc.rename(off)
+            for rel, data in files.items():
+                t = dest / rel
+                t.parent.mkdir(parents=True, exist_ok=True)
+                t.write_bytes(data)
+            self.last_locale_files = len(files)
+            return len(files)
+        except Exception:  # noqa: BLE001 - nunca impede a instalação
+            return 0
 
     def _original_dir(self, mod_name: str, dirs: KenshiDirs) -> Path | None:
         """Pasta do mod original (Workshop ou pasta do jogo): de lá vem a imagem/ícone."""

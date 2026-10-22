@@ -638,7 +638,8 @@ class InstallInfo:
 
 
 def install_translation_info(
-    kenshi_dir: str | Path, built: str | Path, original_name: str, source_dir: str | Path | None = None
+    kenshi_dir: str | Path, built: str | Path, original_name: str, source_dir: str | Path | None = None,
+    text_files: dict[str, bytes] | None = None,
 ) -> InstallInfo:
     """
     Instala o mod traduzido em Kenshi/mods/<nome>/<nome>.mod (mesmo nome do original) e garante que
@@ -669,6 +670,13 @@ def install_translation_info(
             info.backup = backup
     if source_dir is not None:
         copy_mod_folder(source_dir, dest_dir, Path(original).stem, Path(name).stem)
+    for rel, data in (text_files or {}).items():  # arquivos extras já traduzidos (tips.txt, locale/.../main.mo)
+        target = dest_dir / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        backup_extra = target.with_name(target.name + ORIGINAL_SUFFIX)
+        if target.is_file() and not backup_extra.exists() and target.read_bytes() != data:
+            shutil.copy2(target, backup_extra)  # o arquivo do mod fica guardado ao lado (".original")
+        target.write_bytes(data)
     shutil.copy2(built, dest)
     info.cfg_changed = add_to_mods_cfg(kenshi_dir / "data" / "mods.cfg", name, after=original)
     return info

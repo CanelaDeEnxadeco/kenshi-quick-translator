@@ -157,3 +157,34 @@ Versão atual: **0.6.0** (Python 3.10+/Tkinter). Pedido original do usuário: 3 
 - Data folder `%APPDATA%\KenshiTradutor` is copied automatically to `%APPDATA%\KenshiQuickTranslator` (old folder kept, never overwritten).
 - Mods translated with the old mark "[Kenshi Tradutor: ...]" are still recognized.
 - READMEs in English and pt-BR, `.gitignore` added. 203 tests.
+
+## 0.6.4 — textos que o mod altera do jogo base
+- Problema: registros "só referência" (flag bit 0 ligado, bit 1 desligado) que trazem texto (falas, descrições que o mod troca no jogo base) eram pulados; ficavam no idioma original.
+- `fields.collect_changed_base_units` os inclui (só os campos de texto; NUNCA o nome do registro). `FieldReport.changed_base_units` conta quantos.
+- Conferido com o Kathun real (`UnknownRegionsAdventures.mod.original`): 8511 → 9992 textos (+1481). Nos dois modos (completo e dependente) gera, lê de volta e passa na conferência; round-trip idêntico. Flags e dados que não são texto não mudam (conferido no outro chat, no modo completo).
+- Dos 1189 registros do jogo base com texto, 1130 tinham campo traduzido no teste com prefixo; os outros 59 têm campos que o filtro ainda não considera texto (não investiguei).
+- Mods já traduzidos antes disso (ex.: morebeepdialogue, Another World of RO) podem ter falas puladas: reabrir o mod no programa e traduzir de novo traz só os textos novos (o que já estava feito é mantido). Não conferi esses dois mods.
+- Testes: tests/test_v064.py (2). Suíte: 205 OK. NÃO testado: janela, Windows/.exe, o jogo carregando, serviços reais.
+
+## 0.6.5 — traduzir tips.txt (opção)
+- Novo `textfiles.py`: ao INSTALAR, os `.txt` da raiz da pasta do mod que parecem frases (mediana ≥ 4 palavras por linha, ≥ 3 linhas, ≤ 1 MB) são traduzidos linha a linha (proteção de códigos, glossário e memória de tradução; linha que falhar fica no original; BOM e quebras de linha mantidos). Listas de nomes (namesF/namesM/namesMF.txt: 2 palavras por linha) NÃO são traduzidas, de propósito.
+- Opção: Configurações gerais > "Traduzir também os arquivos de texto do mod…" (`Config.translate_text_files`, ligada por padrão). Vale para instalar um mod e para a fila.
+- Conferido com os arquivos reais enviados: tips.txt é reconhecido; namesF e namesMF não. Traduzir de verdade só foi testado com serviço falso.
+- Limite: se o serviço estiver fora na hora de instalar, o .txt é copiado em inglês e a instalação segue; reinstalar tenta de novo (a memória guarda o que já foi feito).
+- Os rótulos do menu/criador de personagem ("NEW GAME", "Idle stance"…) NÃO estão no .mod; origem ainda não identificada (falta ver a pasta do mod).
+- Suíte: 207 OK; gui_smoke61 OK em tela virtual. Não testado no Windows/.exe nem no jogo.
+
+## 0.6.6 — pronta para testar no Windows
+- Base: 0.6.5 (inclui conserto 0.6.4 de textos do jogo base alterados e dicas tips.txt).
+- Novo: junta o `.mo` do mod (ex.: `locale/en_GB/LC_MESSAGES/main.mo` do Kathun) com o `main.mo` do jogo no idioma escolhido (`locale/pt_BR/...`), traduz as linhas do mod e grava no lugar do arquivo do mod (guarda `.original`).
+- Duas caixinhas em Configurações gerais: traduzir dicas (tips.txt) e traduzir o `.mo`. Sem janela "Vasculhar o mod" (removida).
+- NÃO testado no jogo nem no .exe. Hipótese: o `.mo` do mod em inglês é o que deixa o menu em inglês.
+
+## 0.6.7
+- A junção do `.mo` (0.6.6) NÃO resolveu o menu em inglês no teste do usuário (renomear `locale` para `locale_off` resolvia). Agora a opção renomeia a pasta `locale` do mod (instalada e original) para `locale_off` ao instalar; "Restaurar o original" desfaz na pasta instalada. O código de junção (`mofile`, `merge_for_install`) continua no projeto, sem uso na tela.
+- Tela "Escolha seu início" (NEW_GAME_STARTOFF) continua em inglês: o texto não está no .mod do Kathun; o pt_BR do jogo tem a tradução só no gamedata.po (o .mo oficial tem 58 entradas). Não resolvido.
+
+## 0.6.8
+- Descoberta (teste do usuário com o Kathun): se o mod tem pasta `locale`, o jogo busca ali TODOS os arquivos de idioma (main.mo, gamedata.mo, .translation...). Com só o .mo do mod, menu/falas/início ficam em inglês; com a pasta pt_BR inteira do jogo + as 54 frases do mod, tudo ficou em português (teste 3).
+- Agora, ao instalar (opção "Se o mod tem pasta locale…"): a `locale` do mod instalado vira `locale_off` (original guardada) e a nova `locale/<idioma>` é cópia do pacote de idioma do jogo (Kenshi/locale/<idioma>, sem .po, tips.txt e names*.txt) com os `main.mo` mesclados com as frases do mod traduzidas. "Restaurar o original" desfaz.
+- Se o idioma não for achado em Kenshi/locale, nada é mexido. Não testado no jogo/.exe com o programa (só o resultado manual do teste 3).

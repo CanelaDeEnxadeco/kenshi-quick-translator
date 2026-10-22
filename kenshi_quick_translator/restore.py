@@ -59,4 +59,17 @@ def restore_original(kenshi_dir: str | Path, mod_name: str) -> RestoreResult:
     tmp = mod.with_name(mod.name + ".tmp-restaurar")
     shutil.copy2(backup, tmp)
     os.replace(tmp, mod)  # troca de uma vez: nunca fica um .mod pela metade
+    _restore_locale(mod.parent)  # devolve a pasta locale original do mod, se o programa a trocou
     return RestoreResult(mod_file=mod, kept_translation=kept)
+
+
+def _restore_locale(folder: Path) -> None:
+    """locale_off -> locale (a `locale` atual é a gerada pelo programa e é descartada)."""
+    off, loc = folder / "locale_off", folder / "locale"
+    try:
+        if off.is_dir():
+            if loc.is_dir():
+                shutil.rmtree(loc)
+            off.rename(loc)
+    except OSError:
+        pass

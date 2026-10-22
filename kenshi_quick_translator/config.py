@@ -70,6 +70,8 @@ class Config:
     notify_switch: bool = True  # avisar quando trocar de serviço
     translation_mode: str = "completo"  # completo (mesmo nome, substitui o original) | dependente (arquivo pequeno "Nome IDIOMA.mod" que depende do original)
     copy_images: bool = True  # copiar imagem/ícone do mod original ao instalar
+    translate_text_files: bool = True  # traduzir .txt de frases da pasta do mod (ex.: tips.txt) ao instalar
+    translate_locale_files: bool = True  # juntar o .mo (idioma da interface) do mod ao idioma do jogo, traduzido, ao instalar
     tour_done: bool = False  # já mostrou o passo a passo da primeira abertura
     notify_done: bool = True  # som e piscar a janela quando a tradução/fila terminar
     font_scale: int = 100  # tamanho da letra em % (85 a 150)

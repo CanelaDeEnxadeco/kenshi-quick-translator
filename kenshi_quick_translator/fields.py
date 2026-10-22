@@ -166,6 +166,7 @@ class FieldReport:
 
     skipped: dict[str, SkippedField] = field(default_factory=dict)
     extra_units: int = 0  # unidades a mais que o toolkit sozinho acharia
+    changed_base_units: int = 0  # textos que o mod altera em registros do jogo base (0.6.4)
 
     def add(self, key: str, reason: str, value: str) -> None:
         s = self.skipped.get(key)
@@ -188,12 +189,27 @@ def _is_reference_only(flags: int) -> bool:
     return bool(flags & 0b1) and not bool(flags & 0b10)
 
 
+def collect_changed_base_units(mod: ModFile, *, index: dict[str, str] | None = None) -> list[TranslationUnit]:
+    """
+    Textos que o mod ALTERA em registros do jogo base (ou de outro mod): registros "só referência"
+    (flag bit 0 ligado, bit 1 desligado) que trazem texto. O toolkit os pula; sem eles, falas e
+    descrições trocadas pelo mod ficam no idioma original. O NOME do registro nunca entra
+    (renomear um registro do jogo base mudaria o resto do jogo).
+    """
+    with_text = {r.string_id for r in mod.records if _is_reference_only(r.flags) and r.strings}
+    if not with_text:
+        return []
+    found = collect(mod, include_references=True, include_names=False, index=index)
+    return [u for u in found if u.string_id in with_text]
+
+
 def collect_units(
     mod: ModFile,
     *,
     index: dict[str, str] | None = None,
     rules: FieldRules | None = None,
     extra: bool = True,
+    changed_base: bool = True,
 ) -> tuple[list[TranslationUnit], FieldReport]:
     """
     Unidades do toolkit (campos conhecidos) mais os outros campos de texto que passam
@@ -202,6 +218,10 @@ def collect_units(
     rules = rules or FieldRules()
     report = FieldReport()
     base = collect(mod, index=index)
+    if changed_base:
+        changed = collect_changed_base_units(mod, index=index)
+        base = base + changed
+        report.changed_base_units = len(changed)
     if not extra:
         return base, report
 

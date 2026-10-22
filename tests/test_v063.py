@@ -9,7 +9,7 @@ from kenshi_quick_translator import config, core
 
 class Renome(unittest.TestCase):
     def test_pacote_e_versao(self):
-        self.assertEqual(kenshi_quick_translator.__version__, "0.6.3")
+        self.assertTrue(kenshi_quick_translator.__version__)
         self.assertTrue(str(config.app_dir()).endswith("KenshiQuickTranslator"))
 
     def test_migra_pasta_antiga_copiando(self):

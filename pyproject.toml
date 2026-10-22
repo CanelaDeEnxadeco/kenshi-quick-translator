@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kenshi-quick-translator"
-version = "0.6.3"
+version = "0.6.8"
 description = "Kenshi Quick Translator: translate Kenshi mods quickly, protecting the game codes, with side-by-side review and one-click install"
 readme = "README.md"
 requires-python = ">=3.10"

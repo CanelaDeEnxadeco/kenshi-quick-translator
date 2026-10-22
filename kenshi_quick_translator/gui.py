@@ -2108,6 +2108,13 @@ class App(ActionsMixin):
         tk.Label(body, text=i18n.tr(MODE_NOTE), bg=CARD, fg=MUTED, font=self.f_small, wraplength=520, justify="left").grid(
             row=8, column=0, columnspan=2, sticky="w", pady=(2, 0))
 
+        txtfiles = tk.BooleanVar(value=self.cfg.translate_text_files)
+        ttk.Checkbutton(body, text="Traduzir as dicas de carregamento do mod (tips.txt e outros .txt de frases)",
+                        variable=txtfiles, style="Card.TCheckbutton").grid(row=9, column=0, columnspan=2, sticky="w", pady=(10, 3))
+        localefiles = tk.BooleanVar(value=self.cfg.translate_locale_files)
+        ttk.Checkbutton(body, text="Se o mod tem pasta locale: montar o idioma completo (menu, falas, início) e traduzir as frases do mod",
+                        variable=localefiles, style="Card.TCheckbutton").grid(row=10, column=0, columnspan=2, sticky="w", pady=3)
+
         def save() -> None:
             code = next((k for k, v in i18n.LANG_NAMES.items() if v == lang_var.get()), "pt")
             self.cfg.translation_mode = mode_keys[mode_names.index(mode_var.get())] if mode_var.get() in mode_names else "completo"
@@ -2115,6 +2122,8 @@ class App(ActionsMixin):
             self.cfg.ui_lang = code
             self.cfg.notify_switch = bool(notify.get())
             self.cfg.copy_images = bool(images.get())
+            self.cfg.translate_text_files = bool(txtfiles.get())
+            self.cfg.translate_locale_files = bool(localefiles.get())
             self.cfg.notify_done = bool(done_var.get())
             new_font = FONT_STEPS[font_labels.index(font_var.get())] if font_var.get() in font_labels else cur_font
             theme = theme_keys[theme_names.index(theme_var.get())] if theme_var.get() in theme_names else "light"
@@ -2133,14 +2142,14 @@ class App(ActionsMixin):
                 messagebox.showinfo("Configurações gerais", "Salvo. Alguns textos só mudam ao reiniciar o programa.")
 
         ttk.Button(body, text="Limpar dados…", command=lambda: self.open_cleanup(win)).grid(
-            row=9, column=0, sticky="w", pady=(14, 0))
+            row=11, column=0, sticky="w", pady=(14, 0))
         bb = ttk.Frame(body, style="Card.TFrame")
-        bb.grid(row=9, column=1, sticky="e", pady=(14, 0))
+        bb.grid(row=11, column=1, sticky="e", pady=(14, 0))
         ttk.Button(bb, text="Cancelar", command=win.destroy).pack(side="right", padx=(6, 0))
         ttk.Button(bb, text="Salvar", style="Accent.TButton", command=save).pack(side="right")
         credits = tk.Label(body, text=i18n.tr(CREDITS_TEXT), bg=CARD, fg=MUTED, font=self.f_small, wraplength=520,
                            justify="left", cursor="hand2")
-        credits.grid(row=10, column=0, columnspan=2, sticky="w", pady=(16, 0))
+        credits.grid(row=12, column=0, columnspan=2, sticky="w", pady=(16, 0))
         credits.bind("<Button-1>", lambda _e: webbrowser.open(CREDITS_URL))  # discreto: clicar abre a página do Kakrain
         i18n.apply(win)
         win.grab_set()

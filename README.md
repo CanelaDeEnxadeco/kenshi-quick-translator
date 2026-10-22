@@ -10,7 +10,7 @@
 
 **Translate Kenshi mods quickly, without breaking the game's codes.**
 
-![Version](https://img.shields.io/badge/version-0.6.3-blue)
+![Version](https://img.shields.io/badge/version-0.6.5-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -18,7 +18,8 @@
 
 A Windows desktop program that **reads the `.mod` file**, **translates every text** (dialogue, names, descriptions…), lets you **review it side by side**, and **installs the translation straight into Kenshi** — without ever touching the original file.
 
-<img src="docs/img/main-screen.png" alt="Main screen" width="900">
+<!-- 📸 PUT A MAIN-SCREEN SCREENSHOT HERE: docs/img/main-screen.png -->
+<!-- ![Main screen](docs/img/main-screen.png) -->
 
 </div>
 
@@ -67,21 +68,21 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 
 ## 🖼️ Screenshots
 
-| Guided tour | Review |
-|---|---|
-| ![Tour](docs/img/guided-tour.png) | ![Review](docs/img/review.png) |
+> 📸 *Add your screenshots to the `docs/img/` folder and uncomment the lines below.*
 
-| Settings | Font size |
+<!--
+| Mod list | How to translate |
 |---|---|
-| ![Settings](docs/img/settings.png) | ![Font size](docs/img/font-size.png) |
+| ![List](docs/img/mod-list.png) | ![Translate](docs/img/how-to-translate.png) |
 
-| Dark theme | Chinese interface |
+| Review | Settings |
 |---|---|
-| ![Dark](docs/img/dark-mode.png) | ![Chinese](docs/img/chinese.png) |
+| ![Review](docs/img/review.png) | ![Settings](docs/img/settings.png) |
 
-| Russian interface |
-|---|
-| ![Russian](docs/img/russian.png) |
+| Aggregate services | Dark mode |
+|---|---|
+| ![Services](docs/img/services.png) | ![Dark](docs/img/dark-mode.png) |
+-->
 
 ---
 

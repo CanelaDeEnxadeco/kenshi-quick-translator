@@ -10,7 +10,7 @@
 
 **Traduza mods de Kenshi rapidamente, sem estragar os códigos do jogo.**
 
-![Versão](https://img.shields.io/badge/vers%C3%A3o-0.6.3-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-0.6.5-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-lightgrey)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
@@ -18,7 +18,8 @@
 
 Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos** (diálogos, nomes, descrições…), deixa você **revisar lado a lado** e **instala a tradução direto no Kenshi**, sem nunca alterar o arquivo original.
 
-<img src="docs/img/main-screen.png" alt="Tela principal" width="900">
+<!-- 📸 COLOQUE AQUI um print da tela principal: docs/img/tela-principal.png -->
+<!-- ![Tela principal](docs/img/tela-principal.png) -->
 
 </div>
 
@@ -67,21 +68,21 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 
 ## 🖼️ Capturas de tela
 
-| Tour guiado | Revisão |
-|---|---|
-| ![Tour](docs/img/guided-tour.png) | ![Revisão](docs/img/review.png) |
+> 📸 *Adicione aqui os seus prints na pasta `docs/img/` e descomente as linhas abaixo.*
 
-| Configurações | Tamanho da letra |
+<!--
+| Lista de mods | Como traduzir |
 |---|---|
-| ![Configurações](docs/img/settings.png) | ![Letra](docs/img/font-size.png) |
+| ![Lista](docs/img/lista-de-mods.png) | ![Traduzir](docs/img/como-traduzir.png) |
 
-| Tema escuro | Interface em chinês |
+| Revisão | Configurações |
 |---|---|
-| ![Escuro](docs/img/dark-mode.png) | ![Chinês](docs/img/chinese.png) |
+| ![Revisão](docs/img/revisao.png) | ![Configurações](docs/img/configuracoes.png) |
 
-| Interface em russo |
-|---|
-| ![Russo](docs/img/russian.png) |
+| Serviços do agregado | Modo escuro |
+|---|---|
+| ![Serviços](docs/img/servicos.png) | ![Escuro](docs/img/modo-escuro.png) |
+-->
 
 ---
 
