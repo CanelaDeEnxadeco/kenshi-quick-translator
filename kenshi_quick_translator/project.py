@@ -12,6 +12,7 @@ import hashlib
 import os
 import json
 import threading
+import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -60,6 +61,34 @@ class Unit:
         )
 
 
+def _replace_with_retry(tmp: Path, target: Path, text: str, tries: int = 12, wait: float = 0.25) -> None:
+    """
+    tmp -> target. No Windows, antivírus, sincronizadores de nuvem ou outra cópia do programa podem
+    segurar o arquivo por instantes ("Acesso negado", WinError 5): tenta de novo algumas vezes.
+    Se não adiantar, grava direto no arquivo (menos seguro, mas não perde o trabalho).
+    """
+    last: OSError | None = None
+    for i in range(tries):
+        try:
+            tmp.replace(target)
+            return
+        except PermissionError as e:
+            last = e
+            time.sleep(wait)
+    try:
+        try:
+            os.chmod(target, 0o666)  # tira o "somente leitura", se for isso
+        except OSError:
+            pass
+        target.write_text(text, encoding="utf-8")
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+    except OSError:
+        raise last or PermissionError(f"não consegui gravar {target}")
+
+
 @dataclass
 class Project:
     mod_name: str  # nome do arquivo, com extensão (ex.: "recruit Saelith.mod")
@@ -81,6 +110,7 @@ class Project:
         source_lang: str = "auto",
         index: dict[str, str] | None = None,
         rules: FieldRules | None = None,
+        safe_types: bool = True,
     ) -> "Project":
         """
         Lê o mod e cria (ou atualiza) o projeto. Se já existir projeto salvo,
@@ -91,7 +121,7 @@ class Project:
         mod = load(raw)
         if rules is None:  # listas de campos ficam na pasta de dados (a dos projetos fica dentro dela)
             rules = FieldRules.load(Path(workdir).parent)
-        found, field_report = collect_units(mod, index=index, rules=rules)
+        found, field_report = collect_units(mod, index=index, rules=rules, safe_types=safe_types)
         fresh = [
             Unit(
                 string_id=u.string_id, field=u.field, source=u.source,
@@ -144,8 +174,9 @@ class Project:
                 "units": [asdict(u) for u in self.units],
             }
             tmp = target.with_suffix(target.suffix + ".tmp")
-            tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-            tmp.replace(target)  # troca atômica: nunca deixa o projeto pela metade
+            text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+            tmp.write_text(text, encoding="utf-8")
+            _replace_with_retry(tmp, target, text)  # troca atômica: nunca deixa o projeto pela metade
         self.path = target
         return target
 

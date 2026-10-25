@@ -10,7 +10,7 @@
 
 **Translate Kenshi mods quickly, without breaking the game's codes.**
 
-![Version](https://img.shields.io/badge/version-0.6.8-blue)
+![Version](https://img.shields.io/badge/version-0.7.0-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -49,6 +49,17 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 - [📜 License](#-license)
 
 ---
+
+## 🆕 What's new in 0.7.0
+_Covers everything since 0.6.8 (this release also includes 0.6.9)._
+
+- 🛡️ **Safe mode (default).** Only text in records the player sees (dialogue, dialogue lines, items, factions, characters…) is translated. Animations, animation files and effects are never touched, so they can't corrupt the mod. Idea from Kakrain. Can be turned off in Settings.
+- 🎨 **Seven new themes with an animated banner:** Galaxy blue, Green, Red, Yellow, Orange, Purple and Pink. The top banner has a glow rising from the bottom and soft floating lights (paused when the window is minimized). Pick it in Settings → Appearance → Theme.
+- ⚙️ **Settings window redesigned:** bigger, in sections (Appearance, Notices, Translation, Installing in the game, Data and credits), with a short note under each option, fixed Save/Cancel buttons and scrolling on small screens.
+- 💾 **Saving a project no longer fails with "Access denied"** (0.6.9). When antivirus, cloud sync or another copy holds the file for a moment, the program retries and, if needed, writes directly.
+- 🌑 The window no longer flashes light when it opens in a dark theme.
+
+> ⚠️ The animated banner and the new Settings window were checked on a virtual screen and with unit tests, not on every Windows setup. If something looks off, open an issue with a screenshot.
 
 ## 🆕 What's new in 0.6.8
 
@@ -213,7 +224,9 @@ Shows the name, **how many texts need translating**, and **how many texts of eac
 | 🏷️ **Game markers** | `/TEAMUP/`, `/BROTHER/`, `/BASTARD/s`… are protected before going to the service and checked afterwards. If one gets lost, the program tries other ways; if that fails, it keeps the original and marks the line **Review**. No translation with a lost marker is saved. |
 | 📖 **Glossary** | Terms that must always come out the same, or never be translated. The built-in ones are suggestions; edit freely. |
 | 🧑 **Character names** | Left as they are (you can untick this). |
-| 🧬 **Text fields** | Like the original program, it translates every text field except those in `translator_blacklist.txt` (11 technical fields, such as `bone name` and `anim name`). |
+| 🧬 **Text fields** | Like the original program, it translates the text fields except those in `translator_blacklist.txt` (11 technical fields, such as `bone name` and `anim name`). |
+| 🎨 **Themes** | Light, dark, follow Windows, plus seven colour themes with an animated glow and floating lights in the top banner. |
+| 🛡️ **Safe mode** | Extra text fields are taken only from record types the player sees (dialogue, dialogue lines, items, factions, characters…). Animations, animation files and effects are never touched, because translating them can corrupt a mod. Turn it off in Settings. Idea from Kakrain. |
 | 🧯 **Code filter** | Fields that look like code (file name, path, glued identifier, lone lowercase word) stay in English, and the program tells you which. To force a field to be translated, use `translator_liberados.txt`. |
 | 💾 **Saved projects** | Updating the mod doesn't erase your work. If the original text changed, the line comes back as **Review**. |
 | 🔬 **Final check** | The generated file is read back and compared with the project. If anything is wrong, it **does not install**. |
@@ -281,7 +294,7 @@ The **Reset this mod's translation** button deletes that mod's saved progress (w
 ## 🎨 Look and comfort
 
 - 🗣️ **Program language**: Português, English, Español, Русский, 中文 (this is the language of menus, not of the mod translation).
-- 🌗 **Theme**: light, dark or automatic (follows Windows).
+- 🌗 **Theme**: light, dark, automatic (follows Windows) or one of seven colour themes (Galaxy blue, Green, Red, Yellow, Orange, Purple, Pink) with an animated banner.
 - 🔠 **Font size**: 85% to 150%.
 - 🧭 **Guided tour** on first launch (the **Step by step** button at the top reopens it any time).
 - 💬 **Tooltips** when you hover over fields.

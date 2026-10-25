@@ -10,7 +10,7 @@
 
 **Traduza mods de Kenshi rapidamente, sem estragar os códigos do jogo.**
 
-![Versão](https://img.shields.io/badge/vers%C3%A3o-0.6.8-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-0.7.0-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-lightgrey)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
@@ -49,6 +49,17 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 - [📜 Licença](#-licença)
 
 ---
+
+## 🆕 Novidades da 0.7.0
+_Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9)._
+
+- 🛡️ **Modo seguro (padrão).** Só traduz texto de registros que o jogador vê (diálogos, falas, itens, facções, personagens…). Animações, arquivos de animação e efeitos nunca são tocados, então não corrompem o mod. Ideia do Kakrain. Dá para desligar em Configurações.
+- 🎨 **Sete temas novos com faixa animada:** Azul galáxia, Verde, Vermelho, Amarelo, Laranja, Roxo e Rosa. A faixa do topo tem um brilho subindo de baixo e luzinhas planando (pausa quando a janela está minimizada). Escolha em Configurações → Aparência → Tema.
+- ⚙️ **Janela de Configurações refeita:** maior, em seções (Aparência, Avisos, Tradução, Instalação no jogo, Dados e créditos), com uma explicação curta embaixo de cada opção, botões Salvar/Cancelar fixos e rolagem em telas pequenas.
+- 💾 **Salvar o projeto não falha mais com "Acesso negado"** (0.6.9). Quando o antivírus, a sincronização na nuvem ou outra cópia segura o arquivo por um instante, o programa tenta de novo e, se preciso, grava direto.
+- 🌑 A janela não pisca clara ao abrir em tema escuro.
+
+> ⚠️ A faixa animada e a nova janela de Configurações foram conferidas em tela virtual e com testes, não em todo tipo de Windows. Se algo ficar estranho, abra uma issue com um print.
 
 ## 🆕 Novidades da 0.6.8
 
@@ -213,7 +224,9 @@ Mostra o nome, **quantos textos há para traduzir** e **quantos textos de cada i
 | 🏷️ **Marcadores do jogo** | `/TEAMUP/`, `/BROTHER/`, `/BASTARD/s`… são protegidos antes de ir ao serviço e conferidos depois. Se um se perder, o programa tenta de outras formas; se não der, mantém o original e marca **Conferir**. Nenhuma tradução com marcador perdido é gravada. |
 | 📖 **Glossário** | Termos que devem sair sempre iguais ou não ser traduzidos. Os de fábrica são sugestões, edite à vontade. |
 | 🧑 **Nomes de personagens** | Ficam como estão (dá para desmarcar). |
-| 🧬 **Campos de texto** | Como o programa original, traduz todos os campos de texto, menos os da lista `translator_blacklist.txt` (11 campos técnicos, como `bone name` e `anim name`). |
+| 🧬 **Campos de texto** | Como o programa original, traduz os campos de texto, menos os da lista `translator_blacklist.txt` (11 campos técnicos, como `bone name` e `anim name`). |
+| 🎨 **Temas** | Claro, escuro, seguir o Windows, mais sete temas coloridos com brilho animado e luzinhas na faixa do topo. |
+| 🛡️ **Modo seguro** | Os campos de texto extras só vêm de tipos de registro que o jogador vê (diálogos, falas, itens, facções, personagens…). Animações, arquivos de animação e efeitos nunca são tocados, porque traduzir ali pode corromper o mod. Dá para desligar em Configurações. Ideia do Kakrain. |
 | 🧯 **Filtro de código** | Campos que parecem código (nome de arquivo, caminho, identificador colado, palavra solta em minúsculas) ficam em inglês, e o programa avisa quais. Para forçar a tradução de um campo, use `translator_liberados.txt`. |
 | 💾 **Projetos salvos** | Atualizar o mod não apaga o seu trabalho. Se o texto original mudou, a linha volta como **Conferir**. |
 | 🔬 **Conferência final** | O arquivo gerado é lido de volta e comparado com o projeto. Se algo estiver errado, **não instala**. |
@@ -281,7 +294,7 @@ Botão **Zerar tradução deste mod**: apaga o progresso salvo daquele mod (com 
 ## 🎨 Aparência e conforto
 
 - 🗣️ **Idioma do programa**: Português, English, Español, Русский, 中文 (é o idioma dos menus, não o da tradução do mod).
-- 🌗 **Tema**: claro, escuro ou automático (segue o Windows).
+- 🌗 **Tema**: claro, escuro, automático (segue o Windows) ou um dos sete temas coloridos (Azul galáxia, Verde, Vermelho, Amarelo, Laranja, Roxo, Rosa) com faixa animada.
 - 🔠 **Tamanho da letra**: de 85% a 150%.
 - 🧭 **Passo a passo guiado** na primeira abertura (botão **Passo a passo** no topo reabre quando quiser).
 - 💬 **Dicas** ao passar o mouse nos campos.

@@ -188,3 +188,9 @@ Versão atual: **0.6.0** (Python 3.10+/Tkinter). Pedido original do usuário: 3 
 - Descoberta (teste do usuário com o Kathun): se o mod tem pasta `locale`, o jogo busca ali TODOS os arquivos de idioma (main.mo, gamedata.mo, .translation...). Com só o .mo do mod, menu/falas/início ficam em inglês; com a pasta pt_BR inteira do jogo + as 54 frases do mod, tudo ficou em português (teste 3).
 - Agora, ao instalar (opção "Se o mod tem pasta locale…"): a `locale` do mod instalado vira `locale_off` (original guardada) e a nova `locale/<idioma>` é cópia do pacote de idioma do jogo (Kenshi/locale/<idioma>, sem .po, tips.txt e names*.txt) com os `main.mo` mesclados com as frases do mod traduzidas. "Restaurar o original" desfaz.
 - Se o idioma não for achado em Kenshi/locale, nada é mexido. Não testado no jogo/.exe com o programa (só o resultado manual do teste 3).
+
+## 0.6.9
+- Salvar projeto: tenta de novo em caso de PermissionError (WinError 5) e cai para gravação direta. Causa não confirmada (suspeita: antivírus/OneDrive/outra cópia aberta).
+
+## 0.7.0
+- Modo seguro (`cfg.safe_record_types`, padrão True; `collect_units(safe_types=)`): campos extras só de tipos visíveis (`fields.is_visible_type`: editáveis do toolkit + DIALOGUE, DIALOGUE_LINE, DIALOGUE_PACKAGE, TUTORIAL). Tipos técnicos ficam em `FieldReport.technical_types`. Ideia do Kakrain. 224 testes OK; GUI (checkbox em Configurações) não testada no Windows.

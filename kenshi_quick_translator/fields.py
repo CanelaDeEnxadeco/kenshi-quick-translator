@@ -146,6 +146,26 @@ def technical_reason(value: str) -> str | None:
     return None
 
 
+# Tipos de registro que carregam texto que o jogador lê (0.7.0). Os outros (animações, arquivos,
+# efeitos, malhas...) nunca entram nos campos extras: traduzir ali pode corromper o mod.
+# Os 4 extras além dos do toolkit: DIALOGUE, DIALOGUE_LINE, DIALOGUE_PACKAGE e TUTORIAL.
+VISIBLE_EXTRA_TYPES = frozenset({
+    int(TypeCode.DIALOGUE), int(TypeCode.DIALOGUE_LINE), int(TypeCode.DIALOGUE_PACKAGE), int(TypeCode.TUTORIAL),
+})
+
+
+def is_visible_type(code: int) -> bool:
+    """True se o tipo de registro pode ter texto que o jogador vê (diálogos, itens, facções...)."""
+    return TypeCode.is_editable(code) or int(code) in VISIBLE_EXTRA_TYPES
+
+
+def type_label(code: int) -> str:
+    try:
+        return TypeCode(code).name
+    except ValueError:
+        return f"TIPO_{int(code)}"
+
+
 def key_looks_technical(key: str) -> bool:
     k = key.lower()
     return any(h in k for h in TECH_KEY_HINTS)
@@ -167,6 +187,7 @@ class FieldReport:
     skipped: dict[str, SkippedField] = field(default_factory=dict)
     extra_units: int = 0  # unidades a mais que o toolkit sozinho acharia
     changed_base_units: int = 0  # textos que o mod altera em registros do jogo base (0.6.4)
+    technical_types: dict[str, int] = field(default_factory=dict)  # tipo de registro técnico -> textos deixados em inglês (0.7.0)
 
     def add(self, key: str, reason: str, value: str) -> None:
         s = self.skipped.get(key)
@@ -182,6 +203,8 @@ class FieldReport:
         ]
         if len(items) > limit:
             out.append(f"…e mais {len(items) - limit} campo(s).")
+        for name, n in sorted(self.technical_types.items(), key=lambda kv: -kv[1])[:limit]:
+            out.append(f"Registros {name}: {n} texto(s) deixado(s) em inglês (tipo técnico, não é texto de jogo)")
         return out
 
 
@@ -210,10 +233,13 @@ def collect_units(
     rules: FieldRules | None = None,
     extra: bool = True,
     changed_base: bool = True,
+    safe_types: bool = True,
 ) -> tuple[list[TranslationUnit], FieldReport]:
     """
     Unidades do toolkit (campos conhecidos) mais os outros campos de texto que passam
     pela lista e pelo filtro. Com `extra=False` devolve só o que o toolkit acha.
+    Com `safe_types=True` (padrão) os campos extras só vêm de tipos de registro que o jogador
+    vê (diálogos, itens, facções...); animações, arquivos e efeitos ficam intocados.
     """
     rules = rules or FieldRules()
     report = FieldReport()
@@ -235,11 +261,16 @@ def collect_units(
     for rec in mod.records:
         if _is_reference_only(rec.flags):
             continue
+        technical = safe_types and not is_visible_type(rec.typecode)
         for key, value in rec.strings:
             if not value or not value.strip() or key.startswith("_"):
                 continue
             k = key.strip().lower()
             if k in rules.blacklist or (rec.string_id, key) in seen:
+                continue
+            if technical:
+                label = type_label(rec.typecode)
+                report.technical_types[label] = report.technical_types.get(label, 0) + 1
                 continue
             cands.setdefault(k, []).append((rec, key, value))
             seen.add((rec.string_id, key))

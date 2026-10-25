@@ -100,7 +100,7 @@ class Coleta(unittest.TestCase):
         self.assertNotIn("bone name", rep.skipped)   # a lista é silenciosa
 
     def test_tipo_sem_texto_conhecido_so_frases(self):
-        units, rep = collect_units(make_mod(), rules=FieldRules())
+        units, rep = collect_units(make_mod(), rules=FieldRules(), safe_types=False)  # 0.7.0: padrão é seguro
         k = self.keys(units)
         self.assertIn(("2", "remark"), k)
         self.assertNotIn(("2", "mesh2"), k)

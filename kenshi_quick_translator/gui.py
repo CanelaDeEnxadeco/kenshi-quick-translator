@@ -58,7 +58,50 @@ PALETTES: dict[str, dict[str, str]] = {
         GREEN_OFF="#2b5a3d", GREEN_OFF_FG="#8fa89a", ACC_ACT="#2f68c4", ACC_OFF="#2c4670", ACC_OFF_FG="#8d9bb5",
         RED_ACT="#b03e3e", RED_OFF="#5a3030", RED_OFF_FG="#b59a9a",
     ),
+    "galaxia": dict(
+        BG="#0a0f24", CARD="#111a38", INK="#e8ecff", MUTED="#8f9bc7", LINE="#233060", HEAD="#070b1c",
+        ACCENT="#4a7dff", GREEN="#2e9d6f", GREEN_DK="#237a57", RED="#c24a62",
+        BTN="#1b2650", BTN_ACT="#26356b", BTN_OFF="#151e42", HEADING="#17214a", TROUGH="#1f2a58",
+        DONE="#183a3a", PART="#3a3416", ATT="#46391a", REV="#1d4d46", IGN="#6c78a8", SRC="#141d40",
+        WARN="#e0b04a", OKFG="#5fd0a0", HEADSUB="#9fb4ff",
+        GREEN_OFF="#25506a", GREEN_OFF_FG="#9ab8c8", ACC_ACT="#3a67e0", ACC_OFF="#2a3d78", ACC_OFF_FG="#93a3d6",
+        RED_ACT="#b04060", RED_OFF="#522a40", RED_OFF_FG="#c19aa8",
+    ),
 }
+
+
+def _hue_palette(hue: float) -> dict[str, str]:
+    """Paleta escura de um tema colorido: as cores "de superfície" giram do azul da galáxia para o matiz
+    pedido; as de significado (verde = feito, vermelho = parar, aviso) ficam como estão."""
+    import colorsys
+
+    base = PALETTES["galaxia"]
+    shift = (hue - 226) / 360.0
+    spin = ("BG", "CARD", "INK", "MUTED", "LINE", "HEAD", "BTN", "BTN_ACT", "BTN_OFF", "HEADING", "TROUGH",
+            "SRC", "IGN", "HEADSUB", "ACC_OFF_FG")
+    out = dict(base)
+
+    def rot(c: str, s_mul: float = 1.0, v_mul: float = 1.0) -> str:
+        r, g, b = (int(c[i:i + 2], 16) / 255 for i in (1, 3, 5))
+        h, sat, val = colorsys.rgb_to_hsv(r, g, b)
+        r, g, b = colorsys.hsv_to_rgb((h + shift) % 1.0, min(1.0, sat * s_mul), min(1.0, val * v_mul))
+        return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
+
+    for k in spin:
+        out[k] = rot(base[k])
+    val = 0.66 if 30 < hue < 70 else (0.74 if hue < 40 or 120 < hue < 170 else 0.82)  # amarelo/laranja/verde mais escuros: texto branco legível
+    r, g, b = colorsys.hsv_to_rgb(hue / 360.0, 0.72, val)
+    out["ACCENT"] = "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
+    acc = [int(out["ACCENT"][i:i + 2], 16) for i in (1, 3, 5)]
+    card = [int(out["CARD"][i:i + 2], 16) for i in (1, 3, 5)]
+    out["ACC_ACT"] = "#%02x%02x%02x" % tuple(round(c * 0.84) for c in acc)
+    out["ACC_OFF"] = "#%02x%02x%02x" % tuple(round(card[i] * 0.6 + acc[i] * 0.4) for i in range(3))
+    return out
+
+
+for _name, _hue in (("verde", 138), ("vermelho", 355), ("amarelo", 46), ("laranja", 24), ("roxo", 272), ("rosa", 328)):
+    PALETTES[_name] = _hue_palette(_hue)
+EFFECT_THEMES = ("galaxia", "verde", "vermelho", "amarelo", "laranja", "roxo", "rosa")
 THEME = "light"
 BG = CARD = INK = MUTED = LINE = HEAD = ACCENT = GREEN = GREEN_DK = RED = ""
 BTN = BTN_ACT = BTN_OFF = HEADING = TROUGH = DONE = PART = ATT = REV = IGN = SRC = WARN = OKFG = HEADSUB = ""
@@ -463,8 +506,8 @@ class App(ActionsMixin):
 
         root.title(f"Kenshi Quick Translator {__version__}")
         self._restore_window()
-        root.configure(bg=BG)
         set_palette(self.cfg.theme)
+        root.configure(bg=BG)  # depois da paleta: senão a janela abre com o fundo do tema claro
         i18n.set_language(self.cfg.ui_lang)
         i18n.install_hooks()
         self._fonts()
@@ -476,6 +519,7 @@ class App(ActionsMixin):
         self.refresh_mods()
         i18n.apply(root)
         self._recolor(root, {})  # widgets de cor padrão (caixas de texto) também seguem o tema
+        self._sync_galaxy()
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-Return>", lambda e: self.apply_edit())
         root.bind("<Configure>", self._on_root_configure, add="+")
@@ -586,6 +630,33 @@ class App(ActionsMixin):
         self._style()
         self._recolor(self.root, cmap)
         self._style_tags()
+        self._sync_galaxy()
+
+    def _sync_galaxy(self) -> None:
+        """Temas com efeito (Azul galáxia, Verde...): troca o título do topo por uma faixa animada; nos outros volta ao normal."""
+        bar = getattr(self, "hdr_bar", None)
+        if bar is None:
+            return
+        want = THEME if THEME in EFFECT_THEMES else None
+        if self.galaxy is not None and getattr(self, "_fx_theme", None) != want:
+            self.galaxy.destroy()
+            self.galaxy = None
+            if want is None:
+                bar.pack_propagate(True)
+                self.hdr_title.pack(side="left", padx=16, pady=10)
+                self.hdr_sub.pack(side="left", padx=4)
+        if want is not None and self.galaxy is None:
+            from .galaxy import GalaxyBanner
+
+            self.hdr_title.pack_forget()
+            self.hdr_sub.pack_forget()
+            self.galaxy = GalaxyBanner(bar, "Kenshi Quick Translator", self.hdr_sub.cget("text"), self.f_title,
+                                       self.f_base, theme=want)
+            self._fx_theme = want
+            self.galaxy.place(x=0, y=0, relwidth=1, relheight=1)
+            bar.configure(height=self.galaxy._h)
+            bar.pack_propagate(False)
+            tk.Misc.lower(self.galaxy)
 
     def _recolor(self, w, cmap: dict[str, str]) -> None:
         for c in [w, *w.winfo_children()]:
@@ -766,9 +837,12 @@ class App(ActionsMixin):
     def _build_header(self) -> None:
         bar = tk.Frame(self.root, bg=HEAD)
         bar.pack(fill="x")
-        tk.Label(bar, text="Kenshi Quick Translator", bg=HEAD, fg="white", font=self.f_title).pack(side="left", padx=16, pady=10)
-        tk.Label(bar, text="traduza mods rapidamente", bg=HEAD, fg=HEADSUB,
-                 font=self.f_base).pack(side="left", padx=4)
+        self.hdr_bar = bar
+        self.hdr_title = tk.Label(bar, text="Kenshi Quick Translator", bg=HEAD, fg="white", font=self.f_title)
+        self.hdr_title.pack(side="left", padx=16, pady=10)
+        self.hdr_sub = tk.Label(bar, text="traduza mods rapidamente", bg=HEAD, fg=HEADSUB, font=self.f_base)
+        self.hdr_sub.pack(side="left", padx=4)
+        self.galaxy = None
         self.btn_help = ttk.Button(bar, text="?  Ajuda",
                                    command=lambda: messagebox.showinfo("Como usar", i18n.help_text(HELP_TEXT)))
         self.btn_help.pack(side="right", padx=(0, 12), pady=8)
@@ -2060,60 +2134,127 @@ class App(ActionsMixin):
         ServicesDialog(self.root, self.cfg)
 
     def open_settings(self) -> None:
-        """Configurações gerais: idioma do programa e avisos."""
+        """Configurações gerais, em seções: aparência, avisos, tradução, instalação no jogo, dados e créditos."""
         win = tk.Toplevel(self.root)
         win.title(i18n.tr("Configurações gerais"))
         win.transient(self.root)
-        win.resizable(False, False)
         win.configure(bg=BG)
-        body = ttk.Frame(win, style="Card.TFrame", padding=16)
-        body.pack(fill="both", expand=True, padx=12, pady=12)
-        ttk.Label(body, text="Idioma do programa:", style="Card.TLabel").grid(row=0, column=0, sticky="w")
+        sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
+        w, h = min(840, sw - 60), min(800, sh - 90)
+        win.geometry(f"{w}x{h}+{max(0, (sw - w) // 2)}+{max(0, (sh - h) // 2 - 20)}")
+        win.minsize(min(640, w), min(420, h))
+
+        # rodapé fixo com os botões; o resto rola se a tela for pequena
+        foot = ttk.Frame(win, style="Card.TFrame", padding=(16, 10))
+        foot.pack(side="bottom", fill="x")
+        canvas = tk.Canvas(win, bg=BG, highlightthickness=0)
+        bar = ttk.Scrollbar(win, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=bar.set)
+        bar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        body = ttk.Frame(canvas, style="Card.TFrame", padding=(22, 12))
+        inner = canvas.create_window((0, 0), window=body, anchor="nw")
+        body.columnconfigure(1, weight=1)
+        body.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfigure(inner, width=e.width))
+
+        def _wheel(e) -> None:
+            if body.winfo_reqheight() > canvas.winfo_height():
+                canvas.yview_scroll(-1 if e.delta > 0 else 1, "units")
+
+        win.bind("<MouseWheel>", _wheel)
+        wrap = max(380, w - 140)
+        row = [0]
+
+        def heading(text: str) -> None:
+            top = 0 if row[0] == 0 else 12
+            tk.Label(body, text=i18n.tr(text), bg=CARD, fg=INK, font=self.f_bold).grid(
+                row=row[0], column=0, columnspan=2, sticky="w", pady=(top, 2))
+            ttk.Separator(body).grid(row=row[0] + 1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+            row[0] += 2
+
+        def note(text: str, indent: int = 0) -> None:
+            tk.Label(body, text=i18n.tr(text), bg=CARD, fg=MUTED, font=self.f_small, wraplength=wrap - indent,
+                     justify="left").grid(row=row[0], column=0, columnspan=2, sticky="w", padx=(indent, 0), pady=(0, 4))
+            row[0] += 1
+
+        def check(text: str, var: tk.BooleanVar, hint: str = "") -> None:
+            ttk.Checkbutton(body, text=text, variable=var, style="Card.TCheckbutton").grid(
+                row=row[0], column=0, columnspan=2, sticky="w", pady=(4, 0))
+            row[0] += 1
+            if hint:
+                note(hint, indent=24)
+
+        def choice(label: str, var: tk.StringVar, values: list[str], width: int = 30) -> None:
+            ttk.Label(body, text=label, style="Card.TLabel").grid(row=row[0], column=0, sticky="w", pady=(6, 2))
+            ttk.Combobox(body, textvariable=var, values=values, state="readonly", width=width).grid(
+                row=row[0], column=1, sticky="w", padx=12, pady=(6, 2))
+            row[0] += 1
+
+        # ---- Aparência
+        heading("Aparência")
         names = list(i18n.LANG_NAMES.values())
         lang_var = tk.StringVar(value=i18n.LANG_NAMES.get(self.cfg.ui_lang, names[0]))
-        ttk.Combobox(body, textvariable=lang_var, values=names, state="readonly", width=24).grid(
-            row=0, column=1, sticky="w", padx=8)
-        tk.Label(body, text="Esta é a língua dos menus e botões; não muda o idioma da tradução do mod.", bg=CARD,
-                 fg=MUTED, font=self.f_small, wraplength=420, justify="left").grid(
-            row=1, column=0, columnspan=2, sticky="w", pady=(2, 10))
-        ttk.Label(body, text="Tema:", style="Card.TLabel").grid(row=5, column=0, sticky="w", pady=(10, 0))
-        theme_keys = ["light", "dark", "auto"]
-        theme_names = [i18n.tr("Claro"), i18n.tr("Escuro"), i18n.tr("Seguir o Windows")]
+        choice("Idioma do programa:", lang_var, names)
+        note("Esta é a língua dos menus e botões; não muda o idioma da tradução do mod.")
+        from .galaxy import THEME_NAMES as FX_NAMES
+
+        theme_keys = ["light", "dark", *EFFECT_THEMES, "auto"]
+        theme_names = [i18n.tr("Claro"), i18n.tr("Escuro"), *(i18n.tr(FX_NAMES[k]) for k in EFFECT_THEMES),
+                       i18n.tr("Seguir o Windows")]
         theme_var = tk.StringVar(value=theme_names[theme_keys.index(self.cfg.theme) if self.cfg.theme in theme_keys else 0])
-        ttk.Combobox(body, textvariable=theme_var, values=theme_names, state="readonly", width=24).grid(
-            row=5, column=1, sticky="w", padx=8, pady=(10, 0))
-        notify = tk.BooleanVar(value=self.cfg.notify_switch)
-        ttk.Checkbutton(body, text="Avisar quando o programa trocar de serviço", variable=notify,
-                        style="Card.TCheckbutton").grid(row=2, column=0, columnspan=2, sticky="w", pady=3)
-        images = tk.BooleanVar(value=self.cfg.copy_images)
-        ttk.Checkbutton(body, text="Copiar todos os arquivos do mod original ao instalar (modelos, texturas, .info, imagem)", variable=images,
-                        style="Card.TCheckbutton").grid(row=3, column=0, columnspan=2, sticky="w", pady=3)
+        choice("Tema:", theme_var, theme_names)
         font_labels = [f"{i18n.tr(FONT_NAMES[p])} ({p}%)" for p in FONT_STEPS]
         cur_font = clamp_scale(self.cfg.font_scale)
         font_var = tk.StringVar(value=font_labels[FONT_STEPS.index(cur_font)] if cur_font in FONT_STEPS
                                 else f"{cur_font}%")
-        ttk.Label(body, text="Tamanho da letra:", style="Card.TLabel").grid(row=6, column=0, sticky="w", pady=(10, 0))
-        ttk.Combobox(body, textvariable=font_var, values=font_labels, state="readonly", width=24).grid(
-            row=6, column=1, sticky="w", padx=8, pady=(10, 0))
-        done_var = tk.BooleanVar(value=getattr(self.cfg, "notify_done", True))
-        ttk.Checkbutton(body, text="Tocar um som e piscar a janela quando a tradução terminar", variable=done_var,
-                        style="Card.TCheckbutton").grid(row=4, column=0, columnspan=2, sticky="w", pady=3)
+        choice("Tamanho da letra:", font_var, font_labels)
 
+        # ---- Avisos
+        heading("Avisos")
+        notify = tk.BooleanVar(value=self.cfg.notify_switch)
+        check("Avisar quando o programa trocar de serviço", notify)
+        done_var = tk.BooleanVar(value=getattr(self.cfg, "notify_done", True))
+        check("Tocar um som e piscar a janela quando a tradução terminar", done_var)
+
+        # ---- Tradução
+        heading("Tradução")
+        safetypes = tk.BooleanVar(value=self.cfg.safe_record_types)
+        check("Modo seguro (recomendado)", safetypes,
+              "Traduz só registros que têm texto de jogo (diálogos, itens, facções, personagens...). Animações, "
+              "arquivos e efeitos ficam intactos, porque traduzir ali pode corromper o mod. Vale na próxima vez "
+              "que o mod for aberto.")
         mode_keys = ["completo", "dependente"]
         mode_names = [i18n.tr(MODE_LABELS[k]) for k in mode_keys]
         mode_var = tk.StringVar(value=mode_names[mode_keys.index(self.cfg.translation_mode) if self.cfg.translation_mode in mode_keys else 0])
-        ttk.Label(body, text="Tipo do mod traduzido:", style="Card.TLabel").grid(row=7, column=0, sticky="nw", pady=(10, 0))
-        ttk.Combobox(body, textvariable=mode_var, values=mode_names, state="readonly", width=44).grid(
-            row=7, column=1, sticky="w", padx=8, pady=(10, 0))
-        tk.Label(body, text=i18n.tr(MODE_NOTE), bg=CARD, fg=MUTED, font=self.f_small, wraplength=520, justify="left").grid(
-            row=8, column=0, columnspan=2, sticky="w", pady=(2, 0))
+        ttk.Label(body, text="Tipo do mod traduzido:", style="Card.TLabel").grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(10, 2))
+        row[0] += 1
+        ttk.Combobox(body, textvariable=mode_var, values=mode_names, state="readonly", width=82).grid(
+            row=row[0], column=0, columnspan=2, sticky="w", pady=(0, 4))
+        row[0] += 1
+        note(MODE_NOTE)
 
+        # ---- Instalação no jogo
+        heading("Instalação no jogo")
+        images = tk.BooleanVar(value=self.cfg.copy_images)
+        check("Copiar todos os arquivos do mod original ao instalar (modelos, texturas, .info, imagem)", images)
         txtfiles = tk.BooleanVar(value=self.cfg.translate_text_files)
-        ttk.Checkbutton(body, text="Traduzir as dicas de carregamento do mod (tips.txt e outros .txt de frases)",
-                        variable=txtfiles, style="Card.TCheckbutton").grid(row=9, column=0, columnspan=2, sticky="w", pady=(10, 3))
+        check("Traduzir as dicas de carregamento do mod (tips.txt e outros .txt de frases)", txtfiles)
         localefiles = tk.BooleanVar(value=self.cfg.translate_locale_files)
-        ttk.Checkbutton(body, text="Se o mod tem pasta locale: montar o idioma completo (menu, falas, início) e traduzir as frases do mod",
-                        variable=localefiles, style="Card.TCheckbutton").grid(row=10, column=0, columnspan=2, sticky="w", pady=3)
+        check("Mods com pasta locale: montar o idioma completo", localefiles,
+              "Corrige menu, falas e tela de início que ficam em inglês em mods como o Project Kathun, e traduz as "
+              "frases do próprio mod. O original da pasta locale fica guardado como locale_off.")
+
+        # ---- Dados e créditos
+        heading("Dados e créditos")
+        ttk.Button(body, text="Limpar dados…", command=lambda: self.open_cleanup(win)).grid(
+            row=row[0], column=0, sticky="w", pady=(4, 2))
+        row[0] += 1
+        note("Apaga projetos, memória de tradução e cópias do programa (você escolhe o quê). Os mods não são alterados.")
+        credits = tk.Label(body, text=i18n.tr(CREDITS_TEXT), bg=CARD, fg=MUTED, font=self.f_small, wraplength=wrap,
+                           justify="left", cursor="hand2")
+        credits.grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(14, 0))
+        credits.bind("<Button-1>", lambda _e: webbrowser.open(CREDITS_URL))  # discreto: clicar abre a página do Kakrain
 
         def save() -> None:
             code = next((k for k, v in i18n.LANG_NAMES.items() if v == lang_var.get()), "pt")
@@ -2124,6 +2265,7 @@ class App(ActionsMixin):
             self.cfg.copy_images = bool(images.get())
             self.cfg.translate_text_files = bool(txtfiles.get())
             self.cfg.translate_locale_files = bool(localefiles.get())
+            self.cfg.safe_record_types = bool(safetypes.get())
             self.cfg.notify_done = bool(done_var.get())
             new_font = FONT_STEPS[font_labels.index(font_var.get())] if font_var.get() in font_labels else cur_font
             theme = theme_keys[theme_names.index(theme_var.get())] if theme_var.get() in theme_names else "light"
@@ -2141,16 +2283,8 @@ class App(ActionsMixin):
             if changed:
                 messagebox.showinfo("Configurações gerais", "Salvo. Alguns textos só mudam ao reiniciar o programa.")
 
-        ttk.Button(body, text="Limpar dados…", command=lambda: self.open_cleanup(win)).grid(
-            row=11, column=0, sticky="w", pady=(14, 0))
-        bb = ttk.Frame(body, style="Card.TFrame")
-        bb.grid(row=11, column=1, sticky="e", pady=(14, 0))
-        ttk.Button(bb, text="Cancelar", command=win.destroy).pack(side="right", padx=(6, 0))
-        ttk.Button(bb, text="Salvar", style="Accent.TButton", command=save).pack(side="right")
-        credits = tk.Label(body, text=i18n.tr(CREDITS_TEXT), bg=CARD, fg=MUTED, font=self.f_small, wraplength=520,
-                           justify="left", cursor="hand2")
-        credits.grid(row=12, column=0, columnspan=2, sticky="w", pady=(16, 0))
-        credits.bind("<Button-1>", lambda _e: webbrowser.open(CREDITS_URL))  # discreto: clicar abre a página do Kakrain
+        ttk.Button(foot, text="Cancelar", command=win.destroy).pack(side="right", padx=(8, 0))
+        ttk.Button(foot, text="Salvar", style="Accent.TButton", command=save).pack(side="right")
         i18n.apply(win)
         win.grab_set()
 

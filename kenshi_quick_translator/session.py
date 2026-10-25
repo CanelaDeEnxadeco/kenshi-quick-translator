@@ -275,6 +275,7 @@ class Session:
         self.project = Project.from_mod_file(
             self.mod_path, self.projects_folder,
             target_lang=self.cfg.target_lang, source_lang=self.cfg.source_lang,
+            safe_types=self.cfg.safe_record_types,
         )
         self.project.save()
         return self.project
@@ -416,6 +417,7 @@ class Session:
                 proj = Project.from_mod_file(
                     path, self.projects_folder,
                     target_lang=self.cfg.target_lang, source_lang=self.cfg.source_lang,
+                    safe_types=self.cfg.safe_record_types,
                 )
                 proj.save()
                 res.report = translate_project(

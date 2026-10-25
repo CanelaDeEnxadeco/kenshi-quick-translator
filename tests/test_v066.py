@@ -218,5 +218,38 @@ class InstalaPacote(unittest.TestCase):
             self.assertFalse((dest / "locale" / "pt_BR").exists())
 
 
+class SalvarComArquivoTravado(unittest.TestCase):
+    def test_tenta_de_novo_e_cai_para_gravacao_direta(self):
+        from unittest import mock
+        from kenshi_quick_translator import project as P
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            alvo, aux = tmp / "p.json", tmp / "p.json.tmp"
+            alvo.write_text("velho")
+            aux.write_text("novo")
+            real = Path.replace
+            n = {"c": 0}
+
+            def trava(self, dest):  # falha 2 vezes e depois funciona
+                n["c"] += 1
+                if n["c"] <= 2:
+                    raise PermissionError(5, "Acesso negado")
+                return real(self, dest)
+
+            with mock.patch.object(Path, "replace", trava):
+                P._replace_with_retry(aux, alvo, "novo", tries=5, wait=0)
+            self.assertEqual(alvo.read_text(), "novo")
+            self.assertEqual(n["c"], 3)
+            aux.write_text("novo2")
+
+            def sempre(self, dest):
+                raise PermissionError(5, "Acesso negado")
+
+            with mock.patch.object(Path, "replace", sempre):
+                P._replace_with_retry(aux, alvo, "novo2", tries=3, wait=0)  # cai para gravação direta
+            self.assertEqual(alvo.read_text(), "novo2")
+            self.assertFalse(aux.exists())
+
+
 if __name__ == "__main__":
     unittest.main()
