@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kenshi-quick-translator"
-version = "0.7.0"
+version = "0.7.6"
 description = "Kenshi Quick Translator: translate Kenshi mods quickly, protecting the game codes, with side-by-side review and one-click install"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 imagens = ["pillow"]  # ícones de mods em JPG e imagens grandes na lista
+nomes = ["unidecode"]  # nomes em chinês/kanji viram pinyin ao levar names*.txt no modo Dependente (russo, grego, kana e hangul não precisam)
 
 [project.scripts]
 kenshi-quick-translator = "kenshi_quick_translator.cli:main"
@@ -24,4 +25,4 @@ kenshi-quick-translator = "kenshi_quick_translator.cli:main"
 include = ["kenshi_quick_translator*"]
 
 [tool.setuptools.package-data]
-kenshi_quick_translator = ["default_glossary.json", "icone.ico", "icone.png"]
+kenshi_quick_translator = ["default_glossary.json", "icone.ico", "icone.png", "presets/*.json"]

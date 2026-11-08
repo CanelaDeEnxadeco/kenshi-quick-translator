@@ -1,0 +1,29 @@
+{
+ "nome": "Comida e bebida [Deutsch]",
+ "descricao": "Comida, bebidas e drogas do jogo, inclusive nomes de uma palavra só (Pão, Grog...). Não vem marcado por padrão.",
+ "idioma": "de",
+ "fonte": "Tradução oficial do Kenshi (Deutsch), gamedata.po conferido com de_DE.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Ancient Nutri-Rations": "Uralte Nährstoff-Rationen",
+  "Bloodrum": "Blutrum",
+  "Bread": "Brot",
+  "Cactus Rum": "Kaktusrum",
+  "Chewsticks": "Kaustangen",
+  "Cooked Vegetables": "Gekochtes Gemüse",
+  "Dried Fish": "Getrockneter Fisch",
+  "Dried Gristle Flaps": "Getrocknetes Knorpelfleisch",
+  "Dried Meat": "Getrocknetes Fleisch",
+  "Dustwich": "Staubbrot",
+  "Foodcube": "Esswürfel",
+  "Foul Raw Meat": "Faules rohes Fleisch",
+  "Grand Fish": "Großfisch",
+  "Hashish": "Haschisch",
+  "Human Teeth": "Menschliche Zähne",
+  "Meatwrap": "Fleischwrap",
+  "Ration Pack": "Rationspaket",
+  "Raw Meat": "Rohes Fleisch",
+  "Rice Bowl": "Reisschüssel",
+  "Thinfish": "Dünnfisch"
+ }
+}

@@ -161,12 +161,14 @@ _RE_IN = re.compile(r" em (?=\d+ ?(?:s|min|h)\b)")  # "… em 3 s"
 _exact: dict[str, str] = {}
 _frags: list[tuple[str, str]] = []
 _pats: list = []
+_full: list = []
 
 
 def _build() -> None:
     _exact.clear()
     _frags.clear()
     _pats.clear()
+    _full.clear()
     from .i18n_more import EXACT_ONLY, MORE, PATTERNS
 
     if _lang in ("ru", "zh"):
@@ -190,6 +192,20 @@ def _build() -> None:
         if n >= EXACT_ONLY and (len(row[0]) >= 9 or row[0].endswith((". ", ": ", " "))):
             _frags.append((row[0], row[mcol]))
     _pats.extend((re.compile(p[0]), p[mcol]) for p in PATTERNS)
+    from .i18n_v075 import FULL_V075, MORE_V075
+    for row in MORE_V075:
+        _exact[row[0]] = row[mcol]
+        if len(row[0]) >= 9:
+            _frags.append((row[0], row[mcol]))
+    _full.extend((re.compile(p[0]), p[mcol]) for p in FULL_V075)
+    from .ui_tips import MORE_V076  # dicas ao passar o mouse nos botões
+    for row in MORE_V076:
+        _exact[row[0]] = row[mcol]
+        if len(row[0]) >= 9:
+            _frags.append((row[0], row[mcol]))
+    from .tutorial import MORE_TUTORIAL  # tutoriais básico e avançado (só frases exatas: não viram trechos soltos)
+    for row in MORE_TUTORIAL:
+        _exact[row[0]] = row[mcol]
     _frags.sort(key=lambda p: -len(p[0]))
 
 
@@ -203,6 +219,9 @@ def language() -> str:
     return _lang
 
 
+_ICON_RE = re.compile(r"^([^\w\s(“\"…]{1,2})(\s+)(\S.*)$", re.S)
+
+
 def tr(text):
     """Traduz um texto da interface. Fora do português, troca o que reconhece; o resto fica igual."""
     if _lang == "pt" or not isinstance(text, str) or not text:
@@ -210,7 +229,14 @@ def tr(text):
     hit = _exact.get(text)
     if hit is not None:
         return hit
+    m = _ICON_RE.match(text)  # "→  Copiar mod…": traduz o texto e mantém o ícone da frente
+    if m:
+        rest = tr(m.group(3))
+        if rest != m.group(3):
+            return m.group(1) + m.group(2) + rest
     out = text
+    for rx, repl in _full:  # frases com nomes/números: sobre o texto original, antes dos trechos soltos
+        out = rx.sub(repl, out)
     for pt, other in _frags:
         if pt in out:
             out = out.replace(pt, other)

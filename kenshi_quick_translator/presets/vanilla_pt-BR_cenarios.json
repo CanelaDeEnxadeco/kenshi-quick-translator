@@ -1,0 +1,22 @@
+{
+ "nome": "Cenários de início de jogo [Português (Brasil)]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "pt-BR",
+ "fonte": "Tradução oficial do Kenshi (Português (Brasil)), gamedata.po conferido com pt_BR.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "Cidadão do Império",
+  "Guy with a dog": "Andarilho com Cachorro",
+  "Holy Nation Citizen": "Cidadão da Nação Sagrada",
+  "Nobodies": "Ninguéns",
+  "Rock Bottom": "Fundo do Poço",
+  "Son of a Captain": "Filho de Capitão",
+  "The Cannibal Hunters": "Caçadores de Canibais",
+  "The Freedom Seekers": "Os Buscadores da Liberdade",
+  "The Hive Exile": "O Exilado da Colônia",
+  "The Holy Sword": "A Espada Sagrada",
+  "The Slaves": "Os Escravos",
+  "The Wandering Trader": "O Comerciante Viajante",
+  "Wanderer": "Viajante"
+ }
+}

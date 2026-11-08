@@ -99,6 +99,7 @@ class Project:
     path: Path | None = None  # onde o projeto é salvo
     mod_path: str = ""  # caminho completo do mod dono deste projeto (distingue mods de mesmo nome)
     field_report: FieldReport | None = field(default=None, repr=False, compare=False)  # campos deixados em inglês pelo filtro (só em memória)
+    update_info: dict | None = field(default=None, repr=False, compare=False)  # o que mudou ao reabrir o mod (só em memória)
 
     # ------------------------------------------------------------ criação
     @classmethod
@@ -146,6 +147,7 @@ class Project:
 
     def _merge(self, old: "Project") -> None:
         by_key = {u.key: u for u in old.units}
+        mudaram = 0
         for u in self.units:
             prev = by_key.get(u.key)
             if prev is None:
@@ -155,7 +157,28 @@ class Project:
             elif prev.translation:
                 u.status = ATTENTION
                 u.note = f"O original mudou. Tradução antiga: {prev.translation}"
+                mudaram += 1
+            else:
+                mudaram += 1
+        mine = {u.key for u in self.units}
+        # O que o mod trouxe de novo e o que saiu, para mostrar "o que mudou" depois de atualizar o mod original.
+        self.update_info = {
+            "antigos": len(old.units),
+            "novos": sum(1 for u in self.units if u.key not in by_key),
+            "mudaram": mudaram,
+            "removidos": sum(1 for k in by_key if k not in mine),
+            "mod_mudou": bool(old.mod_sha1) and old.mod_sha1 != self.mod_sha1,
+        }
         self.source_lang = old.source_lang if self.source_lang == "auto" else self.source_lang
+
+    def mark_changed_pending(self) -> int:
+        """Textos cujo original mudou voltam a 'pendente' (a tradução antiga fica na nota) para traduzir só o que mudou."""
+        n = 0
+        for u in self.units:
+            if u.status == ATTENTION and u.note.startswith("O original mudou"):
+                u.status, u.translation = PENDING, ""
+                n += 1
+        return n
 
     # ------------------------------------------------------------ arquivo
     def save(self, path: str | Path | None = None) -> Path:

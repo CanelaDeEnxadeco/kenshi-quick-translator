@@ -1,7 +1,8 @@
-KENSHI TRADUTOR
+KENSHI QUICK TRANSLATOR 0.7.6
 Traduza mods de Kenshi rapidamente, sem estragar os codigos do jogo.
 
 COMO USAR
+(Na primeira vez abre uma janela com tutorial basico e avancado; o botao "Tutorial" no topo abre de novo.)
 1. Abra o KenshiQuickTranslator.exe (nao precisa instalar nada).
 2. Escolha o mod na lista e o idioma de destino.
 3. Clique em Traduzir. Pode fechar e continuar depois.

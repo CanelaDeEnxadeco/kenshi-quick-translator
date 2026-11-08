@@ -1,0 +1,32 @@
+{
+ "nome": "Comida e bebida [한국어]",
+ "descricao": "Comida, bebidas e drogas do jogo, inclusive nomes de uma palavra só (Pão, Grog...). Não vem marcado por padrão.",
+ "idioma": "ko",
+ "fonte": "Tradução oficial do Kenshi (한국어), gamedata.po conferido com ko_KR.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Ancient Nutri-Rations": "고대 영양식량",
+  "Bloodrum": "블러드 럼",
+  "Bread": "빵",
+  "Cactus Rum": "선인장 럼",
+  "Chewsticks": "말린 선인장",
+  "Cooked Vegetables": "조리된 채소",
+  "Dried Fish": "말린 생선",
+  "Dried Gristle Flaps": "말린 연골",
+  "Dried Meat": "말린 고기",
+  "Dustwich": "선인장 샌드위치",
+  "Foodcube": "음식 큐브",
+  "Foul Raw Meat": "악취나는 날고기",
+  "Gohan": "비빔밥",
+  "Grand Fish": "왕 물고기",
+  "Grog": "그로그",
+  "Hashish": "해시시",
+  "Human Teeth": "인간의 치아",
+  "Meatwrap": "고기쌈",
+  "Ration Pack": "배급 꾸러미",
+  "Raw Meat": "날고기",
+  "Rice Bowl": "밥",
+  "Sake": "청주",
+  "Thinfish": "얇은 물고기"
+ }
+}

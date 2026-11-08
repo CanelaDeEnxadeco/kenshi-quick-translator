@@ -1,0 +1,22 @@
+{
+ "nome": "Cenários de início de jogo [Français]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "fr",
+ "fonte": "Tradução oficial do Kenshi (Français), gamedata.po conferido com fr_FR.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "Citoyen Empire",
+  "Guy with a dog": "Mec avec Chien",
+  "Holy Nation Citizen": "Citoyen Nation Sacrée",
+  "Nobodies": "Riens du tout",
+  "Rock Bottom": "Fond du Trou",
+  "Son of a Captain": "Fils de Capitaine",
+  "The Cannibal Hunters": "Chasseurs de Cannibales",
+  "The Freedom Seekers": "Chercheurs de Liberté",
+  "The Hive Exile": "Exil de la Ruche",
+  "The Holy Sword": "L'Épee Sacrée",
+  "The Slaves": "Les Esclaves",
+  "The Wandering Trader": "Le Marchand Ambulant",
+  "Wanderer": "Vagabond"
+ }
+}

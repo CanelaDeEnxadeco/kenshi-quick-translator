@@ -1,4 +1,4 @@
-"""Textos novos da 0.7.0 (modo seguro e janela de configurações em seções)."""
+"""Textos novos da 0.7.x (modo seguro e janela de configurações em seções)."""
 from __future__ import annotations
 
 MORE_V070: list[tuple[str, str, str, str, str]] = [
@@ -19,5 +19,61 @@ MORE_V070: list[tuple[str, str, str, str, str]] = [
     ('Laranja', 'Orange', 'Naranja', 'Оранжевая', '橙色'),
     ('Roxo', 'Purple', 'Morado', 'Фиолетовая', '紫色'),
     ('Rosa', 'Pink', 'Rosa', 'Розовая', '粉色'),
+    ("Mods com plugins (RE_Kenshi, DLLs), como o Second Life of Kenshi: use Dependente. Esses mods procuram os próprios arquivos pelo nome e pela pasta; uma cópia completa com outro nome faz o jogo cair.",
+     "Mods with plugins (RE_Kenshi, DLLs), like Second Life of Kenshi: use Dependent. These mods look for their own files by name and folder; a full copy under another name makes the game crash.",
+     "Mods con plugins (RE_Kenshi, DLL), como Second Life of Kenshi: usa Dependiente. Estos mods buscan sus propios archivos por nombre y carpeta; una copia completa con otro nombre hace que el juego se cierre.",
+     "Моды с плагинами (RE_Kenshi, DLL), как Second Life of Kenshi: используйте «Зависимый». Такие моды ищут свои файлы по имени и папке; полная копия под другим именем приводит к вылету.",
+     "带插件（RE_Kenshi、DLL）的模组，如 Second Life of Kenshi：请用“依赖型”。这类模组按名称和文件夹查找自己的文件；改名的完整副本会导致游戏崩溃。"),
+    ("Instalando no jogo", "Installing in the game", "Instalando en el juego", "Установка в игру", "正在安装到游戏"),
+    ("Instalando no jogo… pode demorar em mods grandes. Não feche o programa.",
+     "Installing in the game… this can take a while for big mods. Don't close the program.",
+     "Instalando en el juego… puede tardar con mods grandes. No cierres el programa.",
+     "Установка в игру… для больших модов это может занять время. Не закрывайте программу.",
+     "正在安装到游戏…大型模组可能需要一些时间。请勿关闭程序。"),
+]
+MORE_V070 += [
+    ('Modo Dependente: levar também tips.txt e names*.txt', 'Dependent mode: also bring tips.txt and names*.txt', 'Modo Dependiente: llevar también tips.txt y names*.txt', 'Режим «Зависимый»: добавлять также tips.txt и names*.txt', '依赖模式：同时附带 tips.txt 和 names*.txt'),
+    ('Além do .mod e da imagem, coloca na pasta da tradução o tips.txt (traduzido) e as listas de nomes namesM/namesF/namesMF.txt (copiadas sem traduzir). A pasta do mod original nunca é tocada.', "Besides the .mod and the image, puts tips.txt (translated) and the name lists namesM/namesF/namesMF.txt (copied untranslated) in the translation's folder. The original mod's folder is never touched.", 'Además del .mod y la imagen, pone en la carpeta de la traducción el tips.txt (traducido) y las listas de nombres namesM/namesF/namesMF.txt (copiadas sin traducir). La carpeta del mod original nunca se toca.', 'Помимо .mod и картинки, кладёт в папку перевода tips.txt (переведённый) и списки имён namesM/namesF/namesMF.txt (копируются без перевода). Папка оригинального мода никогда не затрагивается.', '除 .mod 和图片外，还会把 tips.txt（已翻译）和名字列表 namesM/namesF/namesMF.txt（原样复制，不翻译）放进翻译文件夹。原模组文件夹绝不会被改动。'),
+    ('A língua dos menus e botões. Não muda o idioma da tradução do mod.', "The language of menus and buttons. It doesn't change the mod's translation language.", 'El idioma de menús y botones. No cambia el idioma de la traducción del mod.', 'Язык меню и кнопок. Не меняет язык перевода мода.', '菜单和按钮的语言。不会改变模组的翻译语言。'),
+    ('Cores da janela. Os temas com nome têm uma faixa animada no topo, com degradê e luzes flutuando.', 'Window colours. The named themes have an animated banner on top, with a gradient and floating lights.', 'Colores de la ventana. Los temas con nombre tienen una franja animada arriba, con degradado y luces flotando.', 'Цвета окна. У именованных тем вверху анимированная полоса с градиентом и плавающими огоньками.', '窗口配色。带名称的主题顶部有动画横幅，渐变背景并有漂浮的光点。'),
+    ('Aumenta ou diminui as letras do programa.', "Makes the program's text bigger or smaller.", 'Aumenta o reduce las letras del programa.', 'Увеличивает или уменьшает шрифт программы.', '放大或缩小程序的文字。'),
+    ('Mostra um aviso quando um serviço de tradução falha e o programa passa para outro.', 'Shows a notice when a translation service fails and the program switches to another.', 'Muestra un aviso cuando un servicio de traducción falla y el programa pasa a otro.', 'Показывает уведомление, когда сервис перевода даёт сбой и программа переключается на другой.', '当翻译服务出错、程序切换到另一个服务时显示提示。'),
+    ('Útil em traduções demoradas: você pode usar outro programa e ser avisado quando acabar.', 'Handy for long translations: you can use another program and get notified when it ends.', 'Útil en traducciones largas: puedes usar otro programa y recibir un aviso al terminar.', 'Удобно при долгих переводах: можно работать в другой программе и получить сигнал по окончании.', '适合耗时较长的翻译：你可以去用别的程序，结束时会提醒你。'),
+    ('Modo Completo: copia a pasta inteira do original para a pasta do mod traduzido. Modo Dependente: copia só a imagem.', "Full mode: copies the whole original folder into the translated mod's folder. Dependent mode: copies only the image.", 'Modo Completo: copia la carpeta entera del original a la del mod traducido. Modo Dependiente: copia solo la imagen.', 'Режим «Полный»: копирует всю папку оригинала в папку переведённого мода. Режим «Зависимый»: копирует только картинку.', '“完整”模式：把原模组整个文件夹复制到翻译模组文件夹。“依赖”模式：只复制图片。'),
+    ('Vale para o modo Completo. As dicas aparecem na tela de carregamento do jogo.', 'Applies to Full mode. The tips show on the in-game loading screen.', 'Vale para el modo Completo. Los consejos salen en la pantalla de carga del juego.', 'Действует в режиме «Полный». Подсказки показываются на экране загрузки игры.', '适用于“完整”模式。提示会显示在游戏的加载界面。'),
+    ('Verde aurora', 'Aurora green', 'Verde aurora', 'Зелёная аврора', '极光绿'),
+    ('Vermelho supernova', 'Supernova red', 'Rojo supernova', 'Красная сверхновая', '超新星红'),
+    ('Amarelo solar', 'Solar yellow', 'Amarillo solar', 'Солнечная жёлтая', '日光黄'),
+    ('Laranja crepúsculo', 'Twilight orange', 'Naranja crepúsculo', 'Оранжевые сумерки', '暮光橙'),
+    ('Roxo nebulosa', 'Nebula purple', 'Morado nebulosa', 'Фиолетовая туманность', '星云紫'),
+    ('Rosa quasar', 'Quasar pink', 'Rosa cuásar', 'Розовый квазар', '类星体粉'),
+    ('Preto eclipse', 'Eclipse black', 'Negro eclipse', 'Чёрное затмение', '日食黑'),
+    ('Branco lunar', 'Lunar white', 'Blanco lunar', 'Белая луна', '月光白'),
+]
+_old = next(t for t in MORE_V070 if t[0].startswith('Corrige menu'))
+_pre = ('Vale para o modo Completo. ', 'Applies to Full mode. ', 'Vale para el modo Completo. ', 'Действует в режиме «Полный». ', '适用于“完整”模式。')
+MORE_V070.append(tuple(p + o for p, o in zip(_pre, _old)))
+MORE_V070 += [
+    ('Nomes em outro alfabeto: trocar por letras latinas (só quando detectar)', 'Names in another alphabet: switch to Latin letters (only when detected)', 'Nombres en otro alfabeto: pasar a letras latinas (solo si se detecta)', 'Имена в другом алфавите: заменять латиницей (только если обнаружено)', '其他文字的名字：改为拉丁字母（仅在检测到时）'),
+    ('Se as listas namesM/namesF estiverem em russo, grego, japonês, coreano ou chinês e o idioma de destino usa letras latinas, os nomes são convertidos para letras latinas (o jogo não desenha outros alfabetos, e os nomes ficariam invisíveis). Nomes que já estão em letras latinas não são mexidos. Só vale para o modo Dependente.', "If the namesM/namesF lists are in Russian, Greek, Japanese, Korean or Chinese and the target language uses Latin letters, the names are converted to Latin letters (the game doesn't draw other alphabets, so the names would be invisible). Names already in Latin letters are left alone. Dependent mode only.", 'Si las listas namesM/namesF están en ruso, griego, japonés, coreano o chino y el idioma de destino usa letras latinas, los nombres se pasan a letras latinas (el juego no dibuja otros alfabetos y los nombres se verían invisibles). Los nombres que ya están en letras latinas no se tocan. Solo para el modo Dependiente.', 'Если списки namesM/namesF на русском, греческом, японском, корейском или китайском, а язык перевода использует латиницу, имена переводятся в латиницу (игра не рисует другие алфавиты, и имена были бы невидимы). Имена, уже написанные латиницей, не трогаются. Только для режима «Зависимый».', '如果 namesM/namesF 名单是俄语、希腊语、日语、韩语或中文，而目标语言使用拉丁字母，名字会被转成拉丁字母（游戏无法显示其他文字，名字会看不见）。已是拉丁字母的名字不会改动。仅适用于“依赖”模式。'),
+    ('Nomes em outro alfabeto convertidos para letras latinas:', 'Names in another alphabet converted to Latin letters:', 'Nombres en otro alfabeto pasados a letras latinas:', 'Имена в другом алфавите переведены в латиницу:', '已转成拉丁字母的其他文字名字：'),
+    ('Marcar todos', 'Select all', 'Marcar todos', 'Выбрать все', '全选'),
+    ('Desmarcar', 'Clear', 'Desmarcar', 'Снять выбор', '取消选择'),
+    ('Ferramentas…', 'Tools…', 'Herramientas…', 'Инструменты…', '工具…'),
+    ('Modo simples', 'Simple mode', 'Modo simple', 'Простой режим', '简易模式'),
+    ('Ferramentas do mod', 'Mod tools', 'Herramientas del mod', 'Инструменты мода', '模组工具'),
+    ('Sugerir presets', 'Suggest presets', 'Sugerir presets', 'Предложить пресеты', '推荐预设'),
+    ('Nomes novos do mod', 'New names in the mod', 'Nombres nuevos del mod', 'Новые имена в моде', '模组中的新名称'),
+    ('Conferir caracteres', 'Check characters', 'Revisar caracteres', 'Проверить символы', '检查字符'),
+    ('O que mudou', 'What changed', 'Qué cambió', 'Что изменилось', '有何变化'),
+    ('Copiar relatório de erro', 'Copy error report', 'Copiar informe de error', 'Копировать отчёт об ошибке', '复制错误报告'),
+    ('Adicionar esses presets ao glossário', 'Add these presets to the glossary', 'Añadir estos presets al glosario', 'Добавить эти пресеты в глоссарий', '将这些预设加入术语表'),
+    ('Manter todos como estão', 'Keep all as they are', 'Mantener todos como están', 'Оставить все как есть', '全部保持原样'),
+    ('Trocar pontuação por versões simples', 'Replace punctuation with simple versions', 'Cambiar la puntuación por versiones simples', 'Заменить пунктуацию простыми знаками', '将标点换成简单版本'),
+    ('Traduzir só o que mudou', 'Translate only what changed', 'Traducir solo lo que cambió', 'Перевести только изменённое', '只翻译有变化的部分'),
+    ('Desfazer: restaurar o original', 'Undo: restore the original', 'Deshacer: restaurar el original', 'Отмена: восстановить оригинал', '撤销：恢复原版'),
+    ('2. Traduzir este mod', '2. Translate this mod', '2. Traducir este mod', '2. Перевести этот мод', '2. 翻译此模组'),
+    ('3. Instalar no jogo', '3. Install in the game', '3. Instalar en el juego', '3. Установить в игру', '3. 安装到游戏'),
+    ('Relatório de erro', 'Error report', 'Informe de error', 'Отчёт об ошибке', '错误报告'),
 ]
 PATTERNS_V070: list = []

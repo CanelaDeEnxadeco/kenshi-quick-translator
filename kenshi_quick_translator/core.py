@@ -669,7 +669,12 @@ def install_translation_info(
         if backup.exists():
             info.backup = backup
     if source_dir is not None:
-        copy_mod_folder(source_dir, dest_dir, Path(original).stem, Path(name).stem)
+        if dependent:
+            # Modo dependente: o original continua instalado e ativo com a pasta dele. Copiar a pasta inteira
+            # duplicaria tudo (inclusive RE_Kenshi.json e as DLLs, que o RE_Kenshi carregaria duas vezes).
+            copy_mod_images(source_dir, dest_dir, Path(original).stem, Path(name).stem)
+        else:
+            copy_mod_folder(source_dir, dest_dir, Path(original).stem, Path(name).stem)
     for rel, data in (text_files or {}).items():  # arquivos extras já traduzidos (tips.txt, locale/.../main.mo)
         target = dest_dir / rel
         target.parent.mkdir(parents=True, exist_ok=True)

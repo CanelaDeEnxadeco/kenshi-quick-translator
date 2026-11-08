@@ -1,0 +1,32 @@
+{
+ "nome": "Comida e bebida [中文]",
+ "descricao": "Comida, bebidas e drogas do jogo, inclusive nomes de uma palavra só (Pão, Grog...). Não vem marcado por padrão.",
+ "idioma": "zh",
+ "fonte": "Tradução oficial do Kenshi (中文), gamedata.po conferido com zh_CN.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Ancient Nutri-Rations": "古代营养配给",
+  "Bloodrum": "血色朗姆酒",
+  "Bread": "面包",
+  "Cactus Rum": "仙人掌朗姆酒",
+  "Chewsticks": "嚼棒",
+  "Cooked Vegetables": "煮熟的蔬菜",
+  "Dried Fish": "鱼干",
+  "Dried Gristle Flaps": "脆骨干",
+  "Dried Meat": "肉干",
+  "Dustwich": "沙漠三明治",
+  "Foodcube": "食物立方",
+  "Foul Raw Meat": "肮脏的生肉",
+  "Gohan": "米饭",
+  "Grand Fish": "大鱼",
+  "Grog": "格洛格酒",
+  "Hashish": "大麻制剂",
+  "Human Teeth": "人类牙齿",
+  "Meatwrap": "肉卷",
+  "Ration Pack": "口粮包",
+  "Raw Meat": "肉原料",
+  "Rice Bowl": "饭碗",
+  "Sake": "清酒",
+  "Thinfish": "细鱼"
+ }
+}

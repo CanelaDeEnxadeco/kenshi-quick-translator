@@ -133,6 +133,8 @@ TOUR_STEPS = (
 
 # Dicas ao passar o mouse: (parte do texto do widget ou nome do atributo, texto da dica).
 TIPS_BY_TEXT = (
+    ("Mais ações", "Abre um menu com as ações menos usadas: abrir a pasta do mod, abrir a pasta dos projetos e zerar a tradução do mod escolhido."),
+    ("Opções avançadas", "Mostra ou esconde as opções menos usadas: velocidade, mais de um idioma, nomes de personagens e instalar ao terminar. Ao lado fica um resumo do que está ligado."),
     ("Idioma do mod:", "Idioma em que o mod está escrito. “Detectar automaticamente” costuma acertar."),
     ("Traduzir para:", "Idioma para o qual o mod será traduzido. Cada idioma guarda o seu próprio projeto."),
     ("Este mod tem mais de um idioma", "Marque se o mod mistura idiomas (ex.: inglês e chinês). Cada texto é identificado sozinho e traduzido a partir do idioma certo."),

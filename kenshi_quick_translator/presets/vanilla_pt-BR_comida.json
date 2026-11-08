@@ -1,0 +1,31 @@
+{
+ "nome": "Comida e bebida [Português (Brasil)]",
+ "descricao": "Comida, bebidas e drogas do jogo, inclusive nomes de uma palavra só (Pão, Grog...). Não vem marcado por padrão.",
+ "idioma": "pt-BR",
+ "fonte": "Tradução oficial do Kenshi (Português (Brasil)), gamedata.po conferido com pt_BR.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Ancient Nutri-Rations": "Nutrirrações Antigas",
+  "Bloodrum": "Sangue-rum",
+  "Bread": "Pão",
+  "Cactus Rum": "Rum de Cacto",
+  "Chewsticks": "Galhos de mascar",
+  "Cooked Vegetables": "Hortaliças Cozidas",
+  "Dried Fish": "Peixe Seco",
+  "Dried Gristle Flaps": "Pontas de Cartilagem Secas",
+  "Dried Meat": "Carne Seca",
+  "Dustwich": "Sandubareia",
+  "Foodcube": "Cubo Alimentício",
+  "Foul Raw Meat": "Carne Crua Estragada",
+  "Grand Fish": "Grão-peixe",
+  "Grog": "Grogue",
+  "Hashish": "Haxixe",
+  "Human Teeth": "Dentes Humanos",
+  "Meatwrap": "Enrolado de Carne",
+  "Ration Pack": "Pacote de Rações",
+  "Raw Meat": "Carne Crua",
+  "Rice Bowl": "Tigela de Arroz",
+  "Sake": "Saquê",
+  "Thinfish": "Peixe-fino"
+ }
+}

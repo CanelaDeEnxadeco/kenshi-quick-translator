@@ -10,7 +10,7 @@
 
 **Traduza mods de Kenshi rapidamente, sem estragar os códigos do jogo.**
 
-![Versão](https://img.shields.io/badge/vers%C3%A3o-0.7.0-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-0.7.6-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-lightgrey)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
@@ -27,7 +27,7 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 
 ## 📑 Índice
 
-- [🆕 Novidades](#-novidades-da-068)
+- [🆕 Novidades](#-novidades-da-076)
 - [✨ Destaques](#-destaques)
 - [🖼️ Capturas de tela](#️-capturas-de-tela)
 - [🚀 Como usar](#-como-usar)
@@ -50,12 +50,31 @@ Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos**
 
 ---
 
-## 🆕 Novidades da 0.7.0
-_Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9)._
+## 🆕 Novidades da 0.7.6
+_Reúne tudo desde a 0.7.1 (esta versão já inclui da 0.7.2 à 0.7.5)._
+
+- 🎓 **Tutoriais.** Ao abrir pela primeira vez, uma janela de boas-vindas oferece o **Tutorial básico** (6 passos: escolher o mod, o idioma, traduzir, revisar, gerar/instalar) ou o **Tutorial avançado** (17 passos que explicam cada parte da janela e cada botão). Cada passo desenha uma moldura em volta da parte explicada. Dá para abrir de novo quando quiser, no botão **▶ Tutorial**.
+- 💬 **Dica em todos os botões.** Deixe o mouse parado em qualquer botão ou opção para ver o que faz.
+- 📚 **Um glossário para cada idioma de destino.** Trocar o *Traduzir para* troca o glossário também, então termos em português nunca são usados ao traduzir para espanhol. Quando o idioma ainda não tem glossário, o programa pergunta o que fazer.
+- 🏷️ **Presets com os nomes oficiais do Kenshi**, feitos a partir dos próprios arquivos de idioma do jogo, para todos os idiomas que o jogo traz (cidades e lugares, facções, personagens com nome, comidas e bebidas, inícios de jogo). Idiomas sem tradução oficial recebem o preset “manter nomes originais”. A lista de personagens é automática e aproximada: confira.
+- 🔎 **Ferramentas:** *Conferir consistência* (o mesmo texto traduzido de jeitos diferentes e traduções que não usam o glossário) e *Memória de tradução* (tamanho, exportar e importar em `.json`).
+- 🧹 **Janela mais limpa.** O passo 2 fica só com o essencial; velocidade, “mais de um idioma”, nomes de personagens e “instalar ao terminar” estão num quadro recolhível, **Opções avançadas** (um resumo de uma linha fica ao lado). Os botões da lista de mods foram reorganizados (um menu **Mais ações** guarda os pouco usados), os nomes dos serviços não ficam mais cortados, os botões têm contorno fino e ícones pequenos, e o cartão de revisão começa mais acima, aparecendo mais sem rolar.
+- ✨ **Efeito novo na faixa de todos os temas animados:** três camadas de luzes (bolhas grandes e suaves com aro fino, luzes médias brilhando e pontinhos ao fundo) que sobem devagar.
+- 📂 Botão **Abrir pasta do mod** (mostra o arquivo `.mod` no Explorer), ícone novo do programa e **registro de erros** (`erros.log` na pasta de dados), que também anota falhas que fecham o programa sem mensagem.
+- 🧾 No fim da tradução, o resumo diz quantos textos usam o glossário e quantos tinham um termo do glossário mas não o usaram.
+- 🐞 A janela não fecha mais ao trocar o idioma de origem do mod (os erros aparecem na barra de status e vão para o registro).
+
+> ⚠️ A janela foi conferida numa tela virtual de Linux (capturas) e com testes automáticos. **Ainda não foi conferida no Windows com zoom de 125 a 175 %.** Se algo aparecer cortado ou fora do lugar, abra uma *issue* com uma captura de tela.
+
+## 🆕 Novidades da 0.7.1
+_Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9 e a 0.7.0)._
 
 - 🛡️ **Modo seguro (padrão).** Só traduz texto de registros que o jogador vê (diálogos, falas, itens, facções, personagens…). Animações, arquivos de animação e efeitos nunca são tocados, então não corrompem o mod. Ideia do Kakrain. Dá para desligar em Configurações.
-- 🎨 **Sete temas novos com faixa animada:** Azul galáxia, Verde, Vermelho, Amarelo, Laranja, Roxo e Rosa. A faixa do topo tem um brilho subindo de baixo e luzinhas planando (pausa quando a janela está minimizada). Escolha em Configurações → Aparência → Tema.
-- ⚙️ **Janela de Configurações refeita:** maior, em seções (Aparência, Avisos, Tradução, Instalação no jogo, Dados e créditos), com uma explicação curta embaixo de cada opção, botões Salvar/Cancelar fixos e rolagem em telas pequenas.
+- 🎨 **Nove temas novos com faixa animada:** Azul galáxia, Verde aurora, Vermelho supernova, Amarelo solar, Laranja crepúsculo, Roxo nebulosa, Rosa quasar, mais um preto (Preto eclipse) e um branco (Branco lunar). A faixa do topo tem um brilho subindo de baixo e luzinhas planando (pausa quando a janela está minimizada). Escolha em Configurações → Aparência → Tema.
+- ⚙️ **Janela de Configurações refeita:** maior, em seções (Aparência, Avisos, Tradução, Instalação no jogo, Dados e créditos), botões Salvar/Cancelar fixos e rolagem em telas pequenas. A explicação de cada opção agora aparece numa dica quando o mouse para em cima, então a janela fica limpa.
+- ✨ **Temas polidos (0.7.1):** a faixa do topo agora tem um degradê estilo aurora (manchas suaves de luz ao longo da largura) e um fio de brilho na borda de baixo; os temas escuros quentes e o verde ficaram menos "lama"; os botões de destaque têm contraste legível em todos os temas.
+- 📄 **O modo Dependente pode levar `tips.txt` e `namesM/namesF/namesMF.txt`** para a pasta da tradução (opção nova, ligada por padrão). As dicas são traduzidas; as listas de nomes são copiadas como estão. A pasta do mod original nunca é tocada.
+- 🔤 **Nomes em outro alfabeto viram letras latinas (modo Dependente, só quando o programa detecta).** Se `namesM/namesF.txt` estiverem em russo, grego, japonês, coreano ou chinês e o idioma de destino usar letras latinas, os nomes são convertidos (ex.: Шаку → Shaku). O jogo não desenha outros alfabetos, o que deixava os nomes dos personagens invisíveis. Arquivos que já estão em letras latinas, ou no alfabeto do idioma de destino, não são mexidos. Chinês/kanji precisam do pacote opcional `unidecode` (já incluído no `.exe`).
 - 💾 **Salvar o projeto não falha mais com "Acesso negado"** (0.6.9). Quando o antivírus, a sincronização na nuvem ou outra cópia segura o arquivo por um instante, o programa tenta de novo e, se preciso, grava direto.
 - 🌑 A janela não pisca clara ao abrir em tema escuro.
 
@@ -87,6 +106,8 @@ _Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9)._
 | 🧐 **Revisão lado a lado** | Tabela com original e tradução, contador de textos duvidosos, desfazer, segunda passada. |
 | 📦 **Instala em um clique** | Coloca o mod traduzido na pasta do jogo, ativa no `mods.cfg` e guarda o original. |
 | ♻️ **Reversível** | Botão **Restaurar o original** devolve o mod como estava. |
+| 📚 **Glossário por idioma** | Nomes oficiais do Kenshi (cidades, facções, personagens…) para todos os idiomas do jogo, um glossário para cada idioma de destino. |
+| 🎓 **Tutoriais embutidos** | Básico e avançado, com uma moldura em volta da parte explicada. |
 | 🗣️ **Interface em 5 idiomas** | Português, English, Español, Русский e 中文. |
 
 ---
@@ -225,7 +246,7 @@ Mostra o nome, **quantos textos há para traduzir** e **quantos textos de cada i
 | 📖 **Glossário** | Termos que devem sair sempre iguais ou não ser traduzidos. Os de fábrica são sugestões, edite à vontade. |
 | 🧑 **Nomes de personagens** | Ficam como estão (dá para desmarcar). |
 | 🧬 **Campos de texto** | Como o programa original, traduz os campos de texto, menos os da lista `translator_blacklist.txt` (11 campos técnicos, como `bone name` e `anim name`). |
-| 🎨 **Temas** | Claro, escuro, seguir o Windows, mais sete temas coloridos com brilho animado e luzinhas na faixa do topo. |
+| 🎨 **Temas** | Claro, escuro, seguir o Windows, mais nove temas com brilho animado e luzinhas na faixa do topo. |
 | 🛡️ **Modo seguro** | Os campos de texto extras só vêm de tipos de registro que o jogador vê (diálogos, falas, itens, facções, personagens…). Animações, arquivos de animação e efeitos nunca são tocados, porque traduzir ali pode corromper o mod. Dá para desligar em Configurações. Ideia do Kakrain. |
 | 🧯 **Filtro de código** | Campos que parecem código (nome de arquivo, caminho, identificador colado, palavra solta em minúsculas) ficam em inglês, e o programa avisa quais. Para forçar a tradução de um campo, use `translator_liberados.txt`. |
 | 💾 **Projetos salvos** | Atualizar o mod não apaga o seu trabalho. Se o texto original mudou, a linha volta como **Conferir**. |
@@ -294,9 +315,9 @@ Botão **Zerar tradução deste mod**: apaga o progresso salvo daquele mod (com 
 ## 🎨 Aparência e conforto
 
 - 🗣️ **Idioma do programa**: Português, English, Español, Русский, 中文 (é o idioma dos menus, não o da tradução do mod).
-- 🌗 **Tema**: claro, escuro, automático (segue o Windows) ou um dos sete temas coloridos (Azul galáxia, Verde, Vermelho, Amarelo, Laranja, Roxo, Rosa) com faixa animada.
+- 🌗 **Tema**: claro, escuro, automático (segue o Windows) ou um dos nove temas animados (Azul galáxia, Verde aurora, Vermelho supernova, Amarelo solar, Laranja crepúsculo, Roxo nebulosa, Rosa quasar, Preto eclipse, Branco lunar) com faixa animada.
 - 🔠 **Tamanho da letra**: de 85% a 150%.
-- 🧭 **Passo a passo guiado** na primeira abertura (botão **Passo a passo** no topo reabre quando quiser).
+- 🧭 **Tutorial básico e avançado** na primeira abertura (o botão **Tutorial** no topo reabre quando quiser). O básico leva 2 minutos; o avançado explica cada parte da tela e cada botão.
 - 💬 **Dicas** ao passar o mouse nos campos.
 - 📉 **Gráfico de velocidade** durante a tradução.
 - 🔔 Som e janela piscando quando a tradução ou a fila termina (opcional).
@@ -464,6 +485,8 @@ Este projeto nasceu de uma vontade simples: **traduzir mods do Kenshi sem sofrim
 - 🌐 O detector de idioma não separa português do Brasil do de Portugal; textos curtos em alfabeto latino ("Maybe.") não têm como ser decididos com certeza (vão com o idioma automático do serviço).
 - 🎯 O programa só traduz o que **o próprio mod** contém. Linhas do jogo original que o mod apenas *referencia* (aparecem em azul no FCS) não podem ser traduzidas por ele.
 - 🚫 Não traduz para dois idiomas de destino ao mesmo tempo: traduza duas vezes, trocando o idioma. Cada idioma guarda o seu projeto.
+- 🖥️ O layout da janela foi conferido numa tela virtual de Linux, **ainda não no Windows com zoom de 125 a 175 %**.
+- 🏷️ Os presets do glossário vêm dos arquivos do próprio jogo; a lista de personagens é automática e aproximada, e russo e japonês não separam livros de itens.
 - 🈯 As traduções da interface em **russo e chinês** foram feitas por IA, sem revisão de falante nativo. Correções são bem-vindas.
 - ⏱️ O tempo de um mod grande depende do serviço escolhido e do limite da conta; não dá para prometer um número.
 

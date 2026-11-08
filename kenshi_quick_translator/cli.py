@@ -19,13 +19,14 @@ from .project import Project
 from .providers import LANGUAGES, ProviderError, make_provider
 
 
-def _load_glossary(path: str | None) -> Glossary:
+def _load_glossary(path: str | None, lang: str = "pt-BR") -> Glossary:
     if path:
         return Glossary.load(path)
-    user = glossary_path()
+    user = glossary_path(lang)
     if user.exists():
         return Glossary.load(user)
-    return Glossary.default()
+    # sem glossário próprio do idioma, o padrão (em português) só vale para português
+    return Glossary.default() if lang == "pt-BR" else Glossary(lang=lang)
 
 
 def _open_project(args: argparse.Namespace) -> Project:
@@ -62,7 +63,7 @@ def cmd_translate(args: argparse.Namespace) -> int:
         return 2
 
     proj = _open_project(args)
-    glossary = _load_glossary(args.glossary)
+    glossary = _load_glossary(args.glossary, args.to)
     memdb = Path(args.workdir) / "memoria.sqlite" if args.workdir else memory_path()
     memory = TranslationMemory(memdb)
     sources = tuple(s.strip() for s in (args.sources or "").split(",") if s.strip())

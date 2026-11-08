@@ -1,0 +1,21 @@
+{
+ "nome": "Cenários de início de jogo [日本語]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "ja",
+ "fonte": "Tradução oficial do Kenshi (日本語), gamedata.po conferido com ja_JP.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "帝国の市民",
+  "Guy with a dog": "男1人、犬1匹",
+  "Holy Nation Citizen": "ホーリーネーションの市民",
+  "Nobodies": "名もなき者達",
+  "Rock Bottom": "どん底",
+  "The Cannibal Hunters": "カニバルハンター",
+  "The Freedom Seekers": "自由を求める者達",
+  "The Hive Exile": "ハイブの逃亡者",
+  "The Holy Sword": "聖剣",
+  "The Retired Captain": "隊長の息子",
+  "The Slaves": "奴隷",
+  "The Wandering Trader": "さすらいのトレーダー"
+ }
+}

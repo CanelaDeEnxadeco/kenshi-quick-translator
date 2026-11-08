@@ -55,8 +55,7 @@ def _paths(folder: Path, key: str) -> list[Path]:
     if key == "idiomas":
         return [p for n in ("idiomas.json", "idiomas.tmp") if (p := folder / n).is_file()]
     if key == "glossario":
-        p = folder / "glossario.json"
-        return [p] if p.is_file() else []
+        return sorted(p for p in folder.glob("glossario*.json") if p.is_file())
     if key == "config":
         p = folder / "config.json"
         return [p] if p.is_file() else []

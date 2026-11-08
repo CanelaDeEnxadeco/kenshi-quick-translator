@@ -1,0 +1,22 @@
+{
+ "nome": "Cenários de início de jogo [Español]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "es",
+ "fonte": "Tradução oficial do Kenshi (Español), gamedata.po conferido com es_ES.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "Ciudadano del Imperio",
+  "Guy with a dog": "Tío con un perro",
+  "Holy Nation Citizen": "Ciudadano de la Nación Sagrada",
+  "Nobodies": "Nadies",
+  "Rock Bottom": "Tocar Fondo",
+  "Son of a Captain": "Hijo de un Capitán",
+  "The Cannibal Hunters": "Los Cazadores de Caníbales",
+  "The Freedom Seekers": "Los Buscadores de Libertad",
+  "The Hive Exile": "El Exilio del Enjambre",
+  "The Holy Sword": "La Espada Sagrada",
+  "The Slaves": "Los Esclavos",
+  "The Wandering Trader": "El Comerciante Errante",
+  "Wanderer": "Vagabundo"
+ }
+}

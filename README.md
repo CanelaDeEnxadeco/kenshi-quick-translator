@@ -10,7 +10,7 @@
 
 **Translate Kenshi mods quickly, without breaking the game's codes.**
 
-![Version](https://img.shields.io/badge/version-0.7.0-blue)
+![Version](https://img.shields.io/badge/version-0.7.6-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -27,7 +27,7 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 
 ## 📑 Table of contents
 
-- [🆕 What's new](#-whats-new-in-068)
+- [🆕 What's new](#-whats-new-in-076)
 - [✨ Highlights](#-highlights)
 - [🖼️ Screenshots](#️-screenshots)
 - [🚀 Getting started](#-getting-started)
@@ -50,12 +50,31 @@ A Windows desktop program that **reads the `.mod` file**, **translates every tex
 
 ---
 
-## 🆕 What's new in 0.7.0
-_Covers everything since 0.6.8 (this release also includes 0.6.9)._
+## 🆕 What's new in 0.7.6
+_Covers everything since 0.7.1 (this release also includes 0.7.2 to 0.7.5)._
+
+- 🎓 **Tutorials.** On the first launch a welcome window offers a **Basic tutorial** (6 steps: choose the mod, language, translate, review, build/install) or an **Advanced tutorial** (17 steps explaining every part of the window and every button). Each step draws a frame around the part it explains. It can be opened again any time with the **▶ Tutorial** button.
+- 💬 **Tooltips on every button.** Rest the mouse on any button or option to see what it does.
+- 📚 **One glossary per target language.** Switching *Translate to* switches the glossary too, so Portuguese terms are never used when translating to Spanish. When a language has no glossary yet, the program asks what to do.
+- 🏷️ **Presets with the official Kenshi names**, built from the game's own language files, for every language the game ships (cities and places, factions, named characters, food and drinks, new-game starts). Languages with no official translation get a "keep original names" preset. The character list is automatic and approximate: check it.
+- 🔎 **Tools:** *Check consistency* (same source text translated in different ways, and translations that ignore the glossary) and *Translation memory* (size, export and import as `.json`).
+- 🧹 **Cleaner window.** Step 2 keeps only the essentials; speed, "more than one language", character names and "install when done" are in a collapsible **Advanced options** block (a one-line summary stays next to it). The mod list buttons were reorganised (a **More actions** menu holds the rarely used ones), service names no longer get cut off, buttons have a thin outline and small icons, and the review card starts higher so more of it shows without scrolling.
+- ✨ **New banner effect on all animated themes:** three layers of lights (large soft bubbles with a thin ring, medium glowing lights, small dim dots) that drift upward slowly.
+- 📂 **Open mod folder** button (it highlights the `.mod` file in Explorer), a new program icon, and an **error log** (`erros.log` in the data folder) that also records crashes that close the program silently.
+- 🧾 At the end of a translation, the summary says how many texts use the glossary and how many had a glossary term but did not use it.
+- 🐞 The window no longer closes when you change the mod's source language (errors now show in the status bar and go to the log).
+
+> ⚠️ The window was checked on a virtual Linux screen (screenshots) and with unit tests. **It was not yet checked on Windows with 125–175 % screen scaling.** If something looks cut off or out of place, open an issue with a screenshot.
+
+## 🆕 What's new in 0.7.1
+_Covers everything since 0.6.8 (this release also includes 0.6.9 and 0.7.0)._
 
 - 🛡️ **Safe mode (default).** Only text in records the player sees (dialogue, dialogue lines, items, factions, characters…) is translated. Animations, animation files and effects are never touched, so they can't corrupt the mod. Idea from Kakrain. Can be turned off in Settings.
-- 🎨 **Seven new themes with an animated banner:** Galaxy blue, Green, Red, Yellow, Orange, Purple and Pink. The top banner has a glow rising from the bottom and soft floating lights (paused when the window is minimized). Pick it in Settings → Appearance → Theme.
-- ⚙️ **Settings window redesigned:** bigger, in sections (Appearance, Notices, Translation, Installing in the game, Data and credits), with a short note under each option, fixed Save/Cancel buttons and scrolling on small screens.
+- 🎨 **Nine new themes with an animated banner:** Galaxy blue, Aurora green, Supernova red, Solar yellow, Twilight orange, Nebula purple, Quasar pink, plus a black one (Eclipse black) and a white one (Lunar white). The top banner has a glow rising from the bottom and soft floating lights (paused when the window is minimized). Pick it in Settings → Appearance → Theme.
+- ⚙️ **Settings window redesigned:** bigger, in sections (Appearance, Notices, Translation, Installing in the game, Data and credits), fixed Save/Cancel buttons and scrolling on small screens. Each option's explanation now appears as a tooltip when the mouse rests on it, so the window stays clean.
+- ✨ **Themes polished (0.7.1):** the top banner now has an aurora-like gradient (soft bands of light across the width) and a glowing bottom edge; warm and green dark themes are less muddy; highlighted buttons have readable contrast in every theme.
+- 📄 **Dependent mode can bring `tips.txt` and `namesM/namesF/namesMF.txt`** to the translation folder (new option, on by default). The tips are translated; the name lists are copied as they are. The original mod's folder is never touched.
+- 🔤 **Names in another alphabet become Latin letters (Dependent mode, only when detected).** If `namesM/namesF.txt` are in Russian, Greek, Japanese, Korean or Chinese and your target language uses Latin letters, the names are converted (e.g. Шаку → Shaku). The game doesn't draw other alphabets, which made character names invisible. Files already in Latin letters, or in the alphabet of your target language, are left alone. Chinese/kanji need the optional `unidecode` package (included in the `.exe`).
 - 💾 **Saving a project no longer fails with "Access denied"** (0.6.9). When antivirus, cloud sync or another copy holds the file for a moment, the program retries and, if needed, writes directly.
 - 🌑 The window no longer flashes light when it opens in a dark theme.
 
@@ -87,6 +106,8 @@ _Covers everything since 0.6.8 (this release also includes 0.6.9)._
 | 🧐 **Side-by-side review** | Table with original and translation, a counter of doubtful texts, undo, second pass. |
 | 📦 **One-click install** | Puts the translated mod in the game folder, enables it in `mods.cfg`, and keeps the original. |
 | ♻️ **Reversible** | The **Restore the original** button puts the mod back as it was. |
+| 📚 **Glossary per language** | Official Kenshi names (cities, factions, characters…) for every language the game ships, one glossary for each target language. |
+| 🎓 **Built-in tutorials** | Basic and advanced, with a frame around the part being explained. |
 | 🗣️ **Interface in 5 languages** | Português, English, Español, Русский and 中文. |
 
 ---
@@ -225,7 +246,7 @@ Shows the name, **how many texts need translating**, and **how many texts of eac
 | 📖 **Glossary** | Terms that must always come out the same, or never be translated. The built-in ones are suggestions; edit freely. |
 | 🧑 **Character names** | Left as they are (you can untick this). |
 | 🧬 **Text fields** | Like the original program, it translates the text fields except those in `translator_blacklist.txt` (11 technical fields, such as `bone name` and `anim name`). |
-| 🎨 **Themes** | Light, dark, follow Windows, plus seven colour themes with an animated glow and floating lights in the top banner. |
+| 🎨 **Themes** | Light, dark, follow Windows, plus nine themes with an animated glow and floating lights in the top banner. |
 | 🛡️ **Safe mode** | Extra text fields are taken only from record types the player sees (dialogue, dialogue lines, items, factions, characters…). Animations, animation files and effects are never touched, because translating them can corrupt a mod. Turn it off in Settings. Idea from Kakrain. |
 | 🧯 **Code filter** | Fields that look like code (file name, path, glued identifier, lone lowercase word) stay in English, and the program tells you which. To force a field to be translated, use `translator_liberados.txt`. |
 | 💾 **Saved projects** | Updating the mod doesn't erase your work. If the original text changed, the line comes back as **Review**. |
@@ -294,9 +315,9 @@ The **Reset this mod's translation** button deletes that mod's saved progress (w
 ## 🎨 Look and comfort
 
 - 🗣️ **Program language**: Português, English, Español, Русский, 中文 (this is the language of menus, not of the mod translation).
-- 🌗 **Theme**: light, dark, automatic (follows Windows) or one of seven colour themes (Galaxy blue, Green, Red, Yellow, Orange, Purple, Pink) with an animated banner.
+- 🌗 **Theme**: light, dark, automatic (follows Windows) or one of nine animated themes (Galaxy blue, Aurora green, Supernova red, Solar yellow, Twilight orange, Nebula purple, Quasar pink, Eclipse black, Lunar white) with an animated banner.
 - 🔠 **Font size**: 85% to 150%.
-- 🧭 **Guided tour** on first launch (the **Step by step** button at the top reopens it any time).
+- 🧭 **Basic and advanced tutorials** on first launch (the **Tutorial** button at the top reopens them any time). The basic one takes 2 minutes; the advanced one explains every part of the window and every button.
 - 💬 **Tooltips** when you hover over fields.
 - 📉 **Speed graph** while translating.
 - 🔔 Sound and a flashing window when a translation or queue finishes (optional).
@@ -464,6 +485,8 @@ This project started from a simple wish: **translate Kenshi mods without the pai
 - 🌐 The language detector can't tell Brazilian from European Portuguese; short Latin-alphabet texts ("Maybe.") can't be decided with certainty (they go with the service's automatic language).
 - 🎯 The program only translates what **the mod itself** contains. Lines from the base game that the mod merely *references* (shown in blue in the FCS) cannot be translated by it.
 - 🚫 It can't translate into two target languages at once: translate twice, changing the language. Each language keeps its own project.
+- 🖥️ The window layout was checked on a virtual Linux screen, **not yet on Windows with 125–175 % scaling**.
+- 🏷️ The glossary presets come from the game's own files; the character list is automatic and approximate, and Russian and Japanese do not separate books from items.
 - 🈯 The **Russian and Chinese** interface translations were made by AI, without a native speaker's review. Corrections are welcome.
 - ⏱️ How long a large mod takes depends on the chosen service and your account's limits; no number can be promised.
 

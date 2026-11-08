@@ -9,6 +9,7 @@ preferir pode deixá-la em uma variável de ambiente (KENSHI_TRADUTOR_KEY).
 from __future__ import annotations
 
 import json
+import re
 import os
 import sys
 from dataclasses import asdict, dataclass, field
@@ -71,9 +72,11 @@ class Config:
     translation_mode: str = "completo"  # completo (mesmo nome, substitui o original) | dependente (arquivo pequeno "Nome IDIOMA.mod" que depende do original)
     copy_images: bool = True  # copiar imagem/ícone do mod original ao instalar
     translate_text_files: bool = True  # traduzir .txt de frases da pasta do mod (ex.: tips.txt) ao instalar
+    translate_tips_dependent: bool = True  # modo Dependente: levar o tips.txt traduzido na pasta da própria tradução (nunca na do original)
+    latinize_names: bool = True  # modo Dependente: names*.txt em outro alfabeto (russo, chinês...) viram letras latinas, só se o destino não usar esse alfabeto
     translate_locale_files: bool = True  # juntar o .mo (idioma da interface) do mod ao idioma do jogo, traduzido, ao instalar
     safe_record_types: bool = True  # só traduzir campos extras de tipos de registro que o jogador vê (diálogos, itens...); evita corromper animações/arquivos
-    tour_done: bool = False  # já mostrou o passo a passo da primeira abertura
+    tour_done: bool = False  # a janela de boas-vindas (tutoriais) não abre mais sozinha
     notify_done: bool = True  # som e piscar a janela quando a tradução/fila terminar
     font_scale: int = 100  # tamanho da letra em % (85 a 150)
     win_geometry: str = ""  # tamanho e posição da janela ao fechar (ex.: 1300x900+40+20)
@@ -120,5 +123,14 @@ def memory_path() -> Path:
     return app_dir() / "memoria.sqlite"
 
 
-def glossary_path() -> Path:
-    return app_dir() / "glossario.json"
+def glossary_filename(lang: str = "pt-BR") -> str:
+    """Cada idioma de destino tem o seu glossário. O de português do Brasil continua sendo glossario.json
+    (é o arquivo que quem já usava o programa tem); os outros são glossario.<idioma>.json."""
+    lang = lang or "pt-BR"
+    if lang == "pt-BR":
+        return "glossario.json"
+    return f"glossario.{re.sub(r'[^A-Za-z0-9_-]', '_', lang)}.json"
+
+
+def glossary_path(lang: str = "pt-BR") -> Path:
+    return app_dir() / glossary_filename(lang)

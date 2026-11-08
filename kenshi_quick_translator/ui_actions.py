@@ -174,6 +174,7 @@ class ActionsMixin:
     def _ask_service(self, n: int) -> str | None:
         """Pergunta qual serviço usar na segunda passada. Devolve a chave ('' = o serviço atual) ou None."""
         win = tk.Toplevel(self.root)
+        win._tip_ctx = "segunda_passada"
         win.title(i18n.tr("Segunda passada"))
         win.transient(self.root)
         win.resizable(False, False)
@@ -206,6 +207,7 @@ class ActionsMixin:
     def error_dialog(self, title: str, text: str, retry=None, switch=None) -> None:
         """Janela de erro com saídas práticas: tentar de novo (continua de onde parou) e trocar de serviço."""
         win = tk.Toplevel(self.root)
+        win._tip_ctx = "erro_servico"
         win.title(i18n.tr(title))
         win.transient(self.root)
         win.resizable(False, False)

@@ -5,6 +5,7 @@ echo Instalando o Kenshi Quick Translator...
 python -m pip install --upgrade pip
 python -m pip install .
 python -m pip install pillow
+python -m pip install unidecode
 if errorlevel 1 (
   echo.
   echo Deu erro. Confira se o Python esta instalado e marcado em "Add python.exe to PATH".

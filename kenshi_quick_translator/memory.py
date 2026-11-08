@@ -81,6 +81,33 @@ class TranslationMemory:
             )
             self._db.commit()
 
+    def export_json(self, path: str | Path) -> int:
+        """Salva a memória num arquivo .json (para levar a outro computador ou compartilhar)."""
+        import json
+        with self._lock:
+            rows = self._db.execute("SELECT src, tl, dst, origin FROM tm").fetchall()
+        data = [{"src": a, "tl": b, "dst": c, "origin": d} for a, b, c, d in rows]
+        Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=0), encoding="utf-8")
+        return len(data)
+
+    def import_json(self, path: str | Path, overwrite: bool = False) -> int:
+        """Junta um arquivo exportado à memória. Por padrão não troca o que já existe. Devolve quantas entradas entraram."""
+        import json
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        n = 0
+        by_tl: dict[str, list[tuple[str, str, str]]] = {}
+        for r in data:
+            if isinstance(r, dict) and r.get("src") and r.get("dst") and r.get("tl"):
+                by_tl.setdefault(r["tl"], []).append((r["src"], r["dst"], str(r.get("origin") or "importada")))
+        for tl, items in by_tl.items():
+            if not overwrite:
+                have = self.get_many([a for a, _b, _c in items], tl)
+                items = [x for x in items if x[0] not in have]
+            for origin in {x[2] for x in items}:
+                self.put_many([(a, b) for a, b, c in items if c == origin], tl, origin)
+            n += len(items)
+        return n
+
     def count(self) -> int:
         with self._lock:
             return self._db.execute("SELECT COUNT(*) FROM tm").fetchone()[0]

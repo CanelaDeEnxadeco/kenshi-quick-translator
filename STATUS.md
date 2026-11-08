@@ -1,5 +1,12 @@
 # STATUS — Kenshi Quick Translator (continuar em outro chat: leia só este arquivo)
 
+## v0.7.5 — tutoriais básico/avançado + polimento (PRONTO; janela NÃO aberta em tela real)
+- `tutorial.py` (novo, sem Tkinter): textos em 5 idiomas do básico (6 passos), do avançado (17) e da tela de boas-vindas; `MORE_TUTORIAL` alimenta o `i18n.py`.
+- `gui.py`: `Welcome` (boas-vindas: básico / avançado / agora não; "não mostrar" marcado por padrão grava `cfg.tour_done`), `Tour(app, kind)` (moldura de 4 faixas sobre widgets ttk, cartões tk.Frame usam a borda; `_poll` a cada 300 ms acompanha rolagem), `App._tut_target(chave)`, `App.tt` (partes registradas), `open_tutorial_menu`, `start_tutorial`. Botão do topo agora "▶ Tutorial".
+- Polimento: botões da lista de mods em grade 2 colunas; linha de baixo do cartão 3 dividida em `ob` e `ob2`; barra+status+luzes dentro de `prog`; cursor de mãozinha.
+- Testes: `tests/test_tutorial.py` (sem tela) e 2 testes em `tests/test_window_languages.py` (precisam de tela). Simulação com widgets falsos passou. A pedir ao usuário: rodar `testar-janela.bat` e olhar o tutorial nas escalas 125–175%.
+- `ui_extra.TOUR_STEPS` e os textos de `i18n_tour.py` do passo a passo antigo ficaram no código (testes antigos usam), mas a janela não os usa mais.
+
 Versão atual: **0.6.0** (Python 3.10+/Tkinter). Pedido original do usuário: 3 etapas, nesta ordem, respostas econômicas, interface em português do Brasil, não inventar resultados ("não testei" quando não der).
 
 ## ETAPA 1 — PRONTA (testada só com serviços falsos)
@@ -194,3 +201,36 @@ Versão atual: **0.6.0** (Python 3.10+/Tkinter). Pedido original do usuário: 3 
 
 ## 0.7.0
 - Modo seguro (`cfg.safe_record_types`, padrão True; `collect_units(safe_types=)`): campos extras só de tipos visíveis (`fields.is_visible_type`: editáveis do toolkit + DIALOGUE, DIALOGUE_LINE, DIALOGUE_PACKAGE, TUTORIAL). Tipos técnicos ficam em `FieldReport.technical_types`. Ideia do Kakrain. 224 testes OK; GUI (checkbox em Configurações) não testada no Windows.
+
+## 0.7.1
+- Opção `translate_tips_dependent` (padrão True): no modo Dependente `Session._text_files(..., dependent=True)` devolve o tips.txt traduzido + namesM/namesF/namesMF.txt copiados sem traduzir; gravados só na pasta da tradução (`install_translation_info`). Não testado no jogo se o Kenshi lê esses arquivos de uma pasta de mod Dependente.
+- Dicas (Tip) com atraso de 500 ms; janela de Configurações sem textos cinza embaixo das opções.
+- Temas: nomes novos, Preto eclipse e Branco lunar (galaxy.LIGHT_THEMES), degradê com manchas de luz (galaxy.aurora), fio de brilho na borda; saturação menor em amarelo/laranja/verde; `_with_white_text` garante contraste do ACCENT. `tests/audit_themes.py` confere o contraste (0 falhas), `tests/gui_themes.py` captura todos os temas.
+- Testado só em tela virtual (xvfb) e com testes unitários; não no Windows real nem no .exe.
+- Nomes em outro alfabeto: `translit.py` (`latinize_names`, `latinize_line`, `foreign_scripts`); cirílico/grego/kana/hangul com tabela própria, hanzi/kanji só com `unidecode` opcional (kanji sai como pinyin, não como leitura japonesa). Só no Dependente, `cfg.latinize_names` (padrão True), ignora o alfabeto do idioma de destino. O .exe precisa de `--collect-all unidecode` (já no gerar-exe.bat). Não testado no jogo se os nomes passam a aparecer.
+
+## v0.7.3 — pedidos 2, 6, 8 e 4 (lógica testada; JANELAS NÃO ABERTAS: sem Tkinter no ambiente)
+- `suggest.py`: sugere presets pelos nomes vanilla que aparecem no mod; lista nomes novos de registros (campo vazio) fora do glossário/presets.
+- `fontcheck.py`: confere caracteres fora da faixa da fonte (padrão 32–255 do pacote pt-BR; lê `kenshi_fonts.xml` da pasta do jogo se existir) e troca aspas curvas, travessão, reticências etc. por versões simples.
+- `errorreport.py` + `ui_tools.py`: botão “Copiar relatório de erro” (sem chave de API), `report_callback_exception` guarda o último erro.
+- `project.py`: `_merge` preenche `update_info` (novos/mudaram/removidos); `mark_changed_pending()` para “Traduzir só o que mudou”.
+- `ui_tools.py`: janelas “Ferramentas…” e “Modo simples”, botões ao lado de “Glossário…”. Textos em en/es/ru/zh em `i18n_v070.py`.
+- Testes: `tests/test_tools.py` (8). Os demais continuam passando.
+- Presets extras (v0.7.1-presets2): `tools/build_presets_extra.py`.
+
+## v0.7.4 — presets de glossário para todos os idiomas com tradução oficial do Kenshi
+- Idiomas: pt-BR, es, fr, de, ru, ja, ko, zh (12 presets cada) + preset neutro `vanilla_neutro_manter_nomes` (idioma "*") para os demais.
+- `tools/build_presets_lang.py <pasta do idioma> <código> <saída>`: lê `gamedata.po` (com ou sem msgctxt) e usa o `.translation` do jogo como fonte principal (o .po do francês está vazio). Só entra nome que existe no .translation.
+- `glossary.presets_for(idioma)` → (lista, oficial). A janela “Presets do Kenshi” e Ferramentas mostram só os presets do idioma de destino; sem tradução oficial, só o preset neutro.
+- Limites: ru/ja não separam livros de itens (o .po só diz "ITEM"); personagens com nome é uma lista por regras, aproximada; ps_AF veio vazio e en_GB só tem modelos (.pot), sem tradução.
+- Não conferi a qualidade das traduções oficiais (ex.: o .po do espanhol dá "El Meollob" para The Hub).
+
+## v0.7.4.8 — dicas ao passar o mouse em todos os botões
+- Pedido: botões sem a explicação ao colocar o mouse em cima. Antes só os da janela principal que estavam em `ui_extra.TIPS_BY_TEXT` tinham (`_attach_tips`, uma `Tip` por widget, ligada na abertura). Faltavam: cabeçalho (Ajuda, Configurações, Atalhos, Passo a passo, ☰ Mods), Abrir pasta do mod, Segunda passada, Desfazer edição, Restaurar o original, Ferramentas, Modo simples e quase todos os botões das janelas secundárias.
+- `ui_tips.py` (novo): tabela `TIPS` = (janela, texto do botão, dica pt/en/es/ru/zh). Uma dica só se escreve uma vez; `CONTEXT_TIPS`, `BUTTON_TIPS` e `MORE_V076` (frases para `i18n.py`) saem dela. `find_tip(janela, textos, tr)` compara sem ícone no começo, sem atalho "(Ctrl+T)" e sem "…" no fim. Chaves com "§" são dicas ligadas direto ao widget (`widget._tip_text`): setas ▲▼ (as duas listas de serviços têm dicas diferentes) e as caixas de idioma do mod.
+- `gui.AutoTips`: UMA dica automática para toda `TButton/TCheckbutton/TRadiobutton` (`bind_class`), também em janelas e botões criados depois (ex.: os botões que mudam em Ferramentas). Mostra depois de 500 ms parado; ignora widgets que já têm `Tip` própria (`widget._qt_tip`). O texto vem de `App._auto_tip_text`: `_tip_text` do widget → tabela da janela → tabela global → tabela antiga `TIPS_BY_TEXT`. Usa o `_i18n_text` (texto original em português guardado por `i18n.apply`) para achar a dica com o programa em outro idioma.
+- Janelas marcadas com `_tip_ctx` (mesmo "Remover" ou "Fechar" tem dica diferente por janela): tour, config, limpar, glossario, glossario_oferta, presets, servicos, segunda_passada, erro_servico, ferramentas, simples.
+- `tests/test_tips_buttons.py` (8): lê o código e falha se algum botão com texto fixo ficar sem dica (exceções conferidas: "Limpar dados…" tem `Tip` própria; ▲▼ usam `_tip_text`); todas as dicas têm as 4 traduções; dica certa por janela. Se criar botão novo e esse teste falhar, acrescentar a linha em `ui_tips.TIPS`.
+- NÃO cobertos de propósito: caixas de marcar dos presets e da janela "Limpar dados" (cada uma já tem o texto descritivo logo abaixo), campos de texto e listas (Combobox/Entry/Treeview) das janelas secundárias.
+- Testado só com testes de lógica e widgets simulados (sem Tkinter e sem toolkit reais aqui): suíte com toolkit falso dá os mesmos 50 erros da v0.7.4.7 (falta toolkit real) e nenhum novo. A tela real NÃO foi vista: posição da dica perto da borda da janela, dica sobre botão desabilitado (ex.: Parar) e dica dentro das janelas com `grab_set` precisam de teste no Windows.
+- Textos novos em en/es/ru/zh feitos por mim, sem revisão de falante nativo. `__version__` continua "0.7.4" (o teste test_v071 exige que bata com o pyproject).

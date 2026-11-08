@@ -238,7 +238,7 @@ class Simulated(Provider):
     """Não usa internet. Serve para testar o fluxo e ver o programa funcionando."""
 
     name = "simulado"
-    label = "Simulado (sem internet, só para testar)"
+    label = "Simulado (só para testar)"
     official = True
 
     def __init__(self, table: dict[str, str] | None = None, prefix: str = "[PT] ", delay: float = 0.0) -> None:
@@ -273,7 +273,7 @@ class ProviderSpec:
 
 
 SPECS = [
-    ProviderSpec("agregado", "Agregado (gratuitos + serviços que você configurar) — recomendado", False),
+    ProviderSpec("agregado", "Agregado (recomendado)", False),
     ProviderSpec("deepl", DeepL.label, True),
     ProviderSpec("google-cloud", GoogleCloud.label, True),
     ProviderSpec("libretranslate", LibreTranslate.label, False, True),

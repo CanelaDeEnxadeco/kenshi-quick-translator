@@ -1,6 +1,6 @@
 {
-  "_aviso": "Sugestoes iniciais, edite a vontade. Valor null = nao traduzir. Os termos em portugues sao sugestoes minhas e nao uma lista oficial.",
   "case_sensitive": true,
+  "idioma": "pt-BR",
   "terms": {
     "Holy Nation": "Nação Sagrada",
     "Shek Kingdom": "Reino Shek",

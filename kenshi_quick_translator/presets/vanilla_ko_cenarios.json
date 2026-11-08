@@ -1,0 +1,22 @@
+{
+ "nome": "Cenários de início de jogo [한국어]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "ko",
+ "fonte": "Tradução oficial do Kenshi (한국어), gamedata.po conferido com ko_KR.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "제국의 시민",
+  "Guy with a dog": "남자와 강아지",
+  "Holy Nation Citizen": "신성 왕국의 시민",
+  "Nobodies": "보잘것없는 자들",
+  "Rock Bottom": "막장",
+  "Son of a Captain": "대장의 아들",
+  "The Cannibal Hunters": "식인종 사냥꾼",
+  "The Freedom Seekers": "자유를 원하는 사람들",
+  "The Hive Exile": "하이브의 추방자",
+  "The Holy Sword": "신성한 검",
+  "The Slaves": "노예",
+  "The Wandering Trader": "장돌뱅이",
+  "Wanderer": "방랑자"
+ }
+}

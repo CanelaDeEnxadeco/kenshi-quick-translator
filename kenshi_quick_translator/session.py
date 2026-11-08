@@ -15,7 +15,7 @@ from pathlib import Path
 
 from kenshi_translator_toolkit import collect, load
 
-from .config import Config, app_dir, glossary_path, memory_path, projects_dir
+from .config import Config, app_dir, glossary_filename, glossary_path, memory_path, projects_dir
 from .core import (
     BuildResult,
     Options,
@@ -30,13 +30,14 @@ from .core import (
     install_translation_info,
     translate_project,
 )
-from .glossary import Glossary
+from .glossary import Glossary, default_preset_ids, load_preset, presets_for
 from .langdetect import detect_language, detect_text, lang_name
 from .locate import KenshiDirs, ModEntry, find_kenshi, is_kenshi_dir, scan_mods
 from .markers import count_markers, has_letters, markers_match
 from .memory import TranslationMemory
 from .localefiles import build_locale_pack
 from .textfiles import find_text_files, translate_text_files
+from .translit import latinize_names
 from .project import ATTENTION, AUTO, IGNORED, PENDING, REVIEWED, Project, Unit, project_path, resolve_project_path
 from .providers import Provider, make_provider
 from .cleanup import CleanResult  # noqa: F401
@@ -99,6 +100,7 @@ class Session:
         self._profiles_lock = threading.Lock()
         self.undo = UndoHistory()
         self.last_install: InstallInfo | None = None
+        self.last_latinized: dict[str, int] = {}  # names*.txt convertidos para letras latinas na última instalação: arquivo -> linhas
         self.last_locale_files = 0  # arquivos do pacote de idioma escritos na última instalação
 
     # ------------------------------------------------------------ recursos
@@ -117,29 +119,92 @@ class Session:
             self._memory = TranslationMemory(path)
         return self._memory
 
+    # ------------------------------------------------------------ glossário (um por idioma de destino)
+    @property
+    def glossary_lang(self) -> str:
+        return self.cfg.target_lang or "pt-BR"
+
+    def glossary_file_for(self, lang: str) -> Path:
+        name = glossary_filename(lang)
+        return self.workdir / name if self.workdir else glossary_path(lang)
+
     @property
     def glossary_file(self) -> Path:
-        return self.workdir / "glossario.json" if self.workdir else glossary_path()
+        return self.glossary_file_for(self.glossary_lang)
 
     def _load_glossary(self) -> Glossary:
+        lang = self.glossary_lang
         path = self.glossary_file
         if path.exists():
             try:
-                return Glossary.load(path)
+                g = Glossary.load(path)
+                g.lang = g.lang or lang
+                return g
             except (OSError, ValueError):
                 pass
-        return Glossary.default()
+        # O glossário padrão está em português: só vale para português. Outro idioma começa vazio
+        # (ou com um preset, se a pessoa aceitar a oferta), nunca com termos em português.
+        return Glossary.default() if lang == "pt-BR" else Glossary(lang=lang)
 
     def ensure_glossary_file(self) -> Path:
-        """Cria o glossário do usuário (a partir do padrão) para ele poder editar."""
+        """Cria o glossário do idioma de destino (português: a partir do padrão; outros: vazio) para poder editar."""
         path = self.glossary_file
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
-            Glossary.default().save(path)
+            (Glossary.default() if self.glossary_lang == "pt-BR" else Glossary(lang=self.glossary_lang)).save(path)
         return path
 
     def reload_glossary(self) -> None:
         self.glossary = self._load_glossary()
+
+    def other_glossaries(self) -> list[tuple[str, int]]:
+        """Glossários que já existem para OUTROS idiomas de destino: [(idioma, nº de termos)]."""
+        from .providers import LANGUAGES
+
+        found: list[tuple[str, int]] = []
+        for code in LANGUAGES:
+            if code in ("auto", self.glossary_lang):
+                continue
+            f = self.glossary_file_for(code)
+            if f.is_file():
+                try:
+                    found.append((code, len(Glossary.load(f).terms)))
+                except (OSError, ValueError):
+                    continue
+        return found
+
+    def glossary_offer(self) -> dict | None:
+        """Se o idioma de destino ainda não tem glossário, o que dá para oferecer. None = nada a oferecer.
+
+        Português (Brasil) usa o glossário padrão e não recebe oferta. Para os outros idiomas, a oferta existe
+        enquanto o arquivo do glossário daquele idioma não existir.
+        """
+        lang = self.glossary_lang
+        if lang == "pt-BR" or self.glossary_file.exists():
+            return None
+        presets, official = presets_for(lang)
+        ids = default_preset_ids(lang)
+        if not ids:
+            return None
+        total = sum(p["total"] for p in presets if p["id"] in ids)
+        return {"lang": lang, "official": official, "ids": ids, "total": total}
+
+    def accept_glossary_offer(self, ids: list[str] | None = None) -> int:
+        """Cria o glossário do idioma de destino com os presets (padrão: os da oferta). Devolve quantos termos."""
+        offer = self.glossary_offer()
+        if offer is None and ids is None:
+            return 0
+        g = Glossary(lang=self.glossary_lang)
+        for pid in ids if ids is not None else offer["ids"]:
+            g.merge(load_preset(pid))
+        g.save(self.glossary_file)
+        self.glossary = g
+        return len(g.terms)
+
+    def decline_glossary_offer(self) -> None:
+        """Traduzir sem glossário neste idioma: cria o arquivo vazio, e a oferta não volta."""
+        self.ensure_glossary_file()
+        self.reload_glossary()
 
     def close(self) -> None:
         if self._memory is not None:
@@ -433,10 +498,12 @@ class Session:
                         if dirs.kenshi is None:
                             res.error = "mod gerado, mas não achei a pasta do Kenshi para instalar"
                         else:
+                            dep = self.cfg.translation_mode == "dependente"
                             res.installed = install_translation_info(dirs.kenshi, res.built.path, proj.mod_name,
                                                                     Path(path).parent if self.cfg.copy_images else None,
-                                                                    self._text_files(proj.mod_name, dirs, cancel)).dest
-                            self._install_locale(proj.mod_name, dirs, cancel)
+                                                                    self._text_files(proj.mod_name, dirs, cancel, dep) if (not dep or self.cfg.translate_tips_dependent) else None).dest
+                            if not dep:  # dependente: a pasta do original não é tocada
+                                self._install_locale(proj.mod_name, dirs, cancel)
             except ProviderBroken as e:
                 res.error = str(e)
                 break  # o serviço está instável: não adianta seguir para os próximos
@@ -462,9 +529,11 @@ class Session:
         if dirs.kenshi is None:
             raise FileNotFoundError("Pasta do Kenshi não encontrada.")
         src = self._original_dir(self.project.mod_name, dirs) if self.cfg.copy_images else None
+        dep = self.cfg.translation_mode == "dependente"  # dependente: nunca mexe na pasta do original (locale, .txt)
         self.last_install = install_translation_info(dirs.kenshi, built, self.project.mod_name, src,
-                                                     self._text_files(self.project.mod_name, dirs))
-        self._install_locale(self.project.mod_name, dirs)
+                                                     self._text_files(self.project.mod_name, dirs, None, dep) if (not dep or self.cfg.translate_tips_dependent) else None)
+        if not dep:
+            self._install_locale(self.project.mod_name, dirs)
         return self.last_install.dest, self.last_install.cfg_changed
 
     def has_original_backup(self) -> bool:
@@ -504,7 +573,7 @@ class Session:
         return translate_project(self.project, provider, glossary=self.glossary, memory=None,
                                  options=opts, progress=progress, cancel=cancel)
 
-    def _text_files(self, mod_name: str, dirs: KenshiDirs, cancel=None) -> dict[str, bytes]:
+    def _text_files(self, mod_name: str, dirs: KenshiDirs, cancel=None, dependent: bool = False) -> dict[str, bytes]:
         """
         Arquivos da pasta do mod que são traduzidos ao instalar: .txt de frases (ex.: tips.txt) e
         arquivos de idioma .mo (juntados ao idioma do jogo), cada um se a sua opção estiver ligada.
@@ -512,7 +581,10 @@ class Session:
         como está (copiado do original); nunca impede a instalação.
         """
         out: dict[str, bytes] = {}
-        if not self.cfg.translate_text_files:
+        if dependent:
+            self.last_latinized = {}
+        # dependente: só lê o original e grava na pasta da tradução; usa a opção própria
+        if not (self.cfg.translate_tips_dependent if dependent else self.cfg.translate_text_files):
             return out
         try:
             folder = next((e.path.parent for e in scan_mods(dirs) if e.name == mod_name), None)
@@ -521,7 +593,7 @@ class Session:
         if folder is None:
             return out
         provider = None
-        if self.cfg.translate_text_files:
+        if True:  # (sempre: a opção já foi checada acima)
             try:
                 files = find_text_files(folder)
                 if files:
@@ -529,6 +601,18 @@ class Session:
                     out.update(translate_text_files(files, provider, self.cfg.target_lang, self.cfg.source_lang,
                                                     self.glossary, self.memory, cancel))
             except Exception:  # noqa: BLE001
+                pass
+        if dependent:  # listas de nomes: vão como estão (nomes de gente não se traduzem)
+            try:
+                for f in sorted(Path(folder).iterdir()):
+                    if f.is_file() and f.name.lower() in ("namesm.txt", "namesf.txt", "namesmf.txt") and f.stat().st_size < 2_000_000:
+                        data = f.read_bytes()
+                        if self.cfg.latinize_names:  # só mexe se achar outro alfabeto que o destino não usa
+                            data, n = latinize_names(data, self.cfg.target_lang)
+                            if n:
+                                self.last_latinized[f.name] = n
+                        out.setdefault(f.name, data)
+            except OSError:
                 pass
         return out
 

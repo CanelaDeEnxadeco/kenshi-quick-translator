@@ -1,0 +1,21 @@
+{
+ "nome": "Cenários de início de jogo [Deutsch]",
+ "descricao": "Nomes dos cenários da tela de novo jogo (Fundo do Poço, Cidadão do Império...).",
+ "idioma": "de",
+ "fonte": "Tradução oficial do Kenshi (Deutsch), gamedata.po conferido com de_DE.translation",
+ "case_sensitive": true,
+ "terms": {
+  "Empire Citizen": "Bürger des Kaiserreichs",
+  "Guy with a dog": "Typ mit Hund",
+  "Holy Nation Citizen": "Bürger der Heiligen Nation",
+  "Nobodies": "Niemande",
+  "Rock Bottom": "Ganz unten angekommen",
+  "Son of a Captain": "Sohn eines Hauptmanns",
+  "The Cannibal Hunters": "Die Kannibalenjäger",
+  "The Freedom Seekers": "Die Freiheitssuchenden",
+  "The Hive Exile": "Der Ausgestoßene des Schwarms",
+  "The Holy Sword": "Das Heilige Schwert",
+  "The Slaves": "Die Sklaven",
+  "The Wandering Trader": "Der Umherstreifende Händler"
+ }
+}

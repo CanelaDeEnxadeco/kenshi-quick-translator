@@ -25,14 +25,18 @@ import webbrowser
 from pathlib import Path
 from tkinter import filedialog, font as tkfont, messagebox, ttk
 
-from . import __version__, i18n
+from . import __version__, i18n, tutorial
+from .errorreport import format_exc, log_error
 from .config import Config
 from .core import ProviderBroken
+from .glossary import Glossary, list_presets, load_preset, presets_for
 from .langdetect import lang_name
 from .locate import ModEntry
 from .providers import LANGUAGES, SPECS, ProviderError, friendly_error
 from .ui_actions import ActionsMixin, install_notice
-from .ui_extra import TIPS_BY_TEXT, TOUR_STEPS, RateTracker, icon_factor, pick_icon_file, sparkline_coords
+from .ui_tools import ToolsMixin
+from .ui_tips import TIP_FREE_DOWN, TIP_FREE_UP, TIP_LIST_DOWN, TIP_LIST_UP, TIP_MULTI_LANG, find_tip
+from .ui_extra import TIPS_BY_TEXT, RateTracker, icon_factor, pick_icon_file, sparkline_coords
 from .freeproviders import DEFAULT_ORDER, FREE_CLASSES
 from .services import KINDS, PRESETS, build_aggregate, build_service
 from .session import Session, ManyResult, language_label, present_languages
@@ -45,7 +49,7 @@ PALETTES: dict[str, dict[str, str]] = {
         ACCENT="#2b6fe0", GREEN="#2e9d57", GREEN_DK="#237a43", RED="#c93c3c",
         BTN="#e7eaf0", BTN_ACT="#d7dce6", BTN_OFF="#eef0f4", HEADING="#eceff4", TROUGH="#e3e7ee",
         DONE="#e3f5ea", PART="#fff6d6", ATT="#fff3cd", REV="#d9f2df", IGN="#8a94a1", SRC="#f2f4f7",
-        WARN="#9a6700", OKFG="#1b7a34", HEADSUB="#a9b6c6",
+        WARN="#8f5f00", OKFG="#1b7a34", HEADSUB="#a9b6c6",
         GREEN_OFF="#a9d4b9", GREEN_OFF_FG="#f0f7f2", ACC_ACT="#1f55b3", ACC_OFF="#a9c1ee", ACC_OFF_FG="#f0f4fc",
         RED_ACT="#a82f2f", RED_OFF="#e6b4b4", RED_OFF_FG="#fbf1f1",
     ),
@@ -87,8 +91,10 @@ def _hue_palette(hue: float) -> dict[str, str]:
         r, g, b = colorsys.hsv_to_rgb((h + shift) % 1.0, min(1.0, sat * s_mul), min(1.0, val * v_mul))
         return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
 
+    # matizes quentes e o verde ficavam turvos (marrom/oliva) com a saturação do azul: menos saturação neles
+    sat = 0.52 if 30 < hue < 70 else 0.66 if 10 <= hue <= 30 else 0.82 if 100 < hue < 180 else 0.9 if hue > 300 or hue < 10 else 1.0
     for k in spin:
-        out[k] = rot(base[k])
+        out[k] = rot(base[k], s_mul=sat)
     val = 0.66 if 30 < hue < 70 else (0.74 if hue < 40 or 120 < hue < 170 else 0.82)  # amarelo/laranja/verde mais escuros: texto branco legível
     r, g, b = colorsys.hsv_to_rgb(hue / 360.0, 0.72, val)
     out["ACCENT"] = "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
@@ -99,9 +105,35 @@ def _hue_palette(hue: float) -> dict[str, str]:
     return out
 
 
+def _lum(c: str) -> float:
+    def f(v: float) -> float:
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (int(c[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+
+
+def _with_white_text(color: str, need: float = 4.6) -> str:
+    """Escurece a cor até o texto branco por cima dela ter contraste suficiente (WCAG)."""
+    c = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+    for _ in range(40):
+        if 1.05 / (_lum("#%02x%02x%02x" % tuple(c)) + 0.05) >= need:
+            break
+        c = [round(v * 0.96) for v in c]
+    return "#%02x%02x%02x" % tuple(c)
+
+
+PALETTES["preto"] = dict(
+    PALETTES["dark"], BG="#0c0c0f", CARD="#151519", INK="#ececf2", MUTED="#9a9aa6", LINE="#2a2a31", HEAD="#08080a",
+    ACCENT="#5a6a90", BTN="#232329", BTN_ACT="#32323a", BTN_OFF="#1b1b20", HEADING="#1d1d23", TROUGH="#2c2c34",
+    SRC="#1a1a1f", IGN="#74747f", HEADSUB="#aab0c4", ACC_ACT="#4c5b80", ACC_OFF="#2e3345", ACC_OFF_FG="#9a9fb0",
+)
+PALETTES["branco"] = dict(PALETTES["light"], BG="#f5f6fa", HEAD="#f7f9fd", HEADSUB="#4a5a73")
 for _name, _hue in (("verde", 138), ("vermelho", 355), ("amarelo", 46), ("laranja", 24), ("roxo", 272), ("rosa", 328)):
     PALETTES[_name] = _hue_palette(_hue)
-EFFECT_THEMES = ("galaxia", "verde", "vermelho", "amarelo", "laranja", "roxo", "rosa")
+for _pal in PALETTES.values():  # botões de destaque (texto branco) legíveis em todos os temas
+    _pal["ACCENT"] = _with_white_text(_pal["ACCENT"])
+    _pal["ACC_ACT"] = _with_white_text("#%02x%02x%02x" % tuple(round(int(_pal["ACCENT"][i:i + 2], 16) * 0.86) for i in (1, 3, 5)))
+EFFECT_THEMES = ("galaxia", "verde", "vermelho", "amarelo", "laranja", "roxo", "rosa", "preto", "branco")
 THEME = "light"
 BG = CARD = INK = MUTED = LINE = HEAD = ACCENT = GREEN = GREEN_DK = RED = ""
 BTN = BTN_ACT = BTN_OFF = HEADING = TROUGH = DONE = PART = ATT = REV = IGN = SRC = WARN = OKFG = HEADSUB = ""
@@ -201,12 +233,23 @@ class Tip:
     """Dica que aparece ao passar o mouse sobre um widget (texto vem de uma função, para ficar sempre atual)."""
 
     def __init__(self, widget, text_fn) -> None:
-        self.widget, self.text_fn, self.win = widget, text_fn, None
-        widget.bind("<Enter>", self._show, add="+")
+        self.widget, self.text_fn, self.win, self._job = widget, text_fn, None, None
+        widget._qt_tip = True  # a dica automática (AutoTips) não repete em quem já tem a sua
+        widget.bind("<Enter>", self._schedule, add="+")
         widget.bind("<Leave>", self._hide, add="+")
+        widget.bind("<ButtonPress>", self._hide, add="+")
+        widget.bind("<Destroy>", self._hide, add="+")
+
+    def _schedule(self, _e=None) -> None:
+        """A dica só aparece quando o mouse fica parado em cima por um instante."""
+        self._hide()
+        try:
+            self._job = self.widget.after(500, self._show)
+        except tk.TclError:
+            self._job = None
 
     def _show(self, _e=None) -> None:
-        self._hide()
+        self._job = None
         text = self.text_fn()
         if not text:
             return
@@ -218,6 +261,12 @@ class Tip:
                  justify="left", wraplength=360, padx=6, pady=3).pack()
 
     def _hide(self, _e=None) -> None:
+        if self._job is not None:
+            try:
+                self.widget.after_cancel(self._job)
+            except tk.TclError:
+                pass
+            self._job = None
         if self.win is not None:
             try:
                 self.win.destroy()
@@ -225,35 +274,102 @@ class Tip:
                 pass
             self.win = None
 
-class Tour:
-    """Passo a passo da primeira abertura: realça uma parte da janela de cada vez e explica o que fazer nela."""
+class AutoTips:
+    """
+    Dica ao passar o mouse em TODO botão, caixa de marcar e opção do programa, inclusive nas janelas abertas depois.
+    O texto vem de `text_fn(widget)`; widgets que já têm uma `Tip` própria (`_qt_tip`) são deixados em paz.
+    """
 
-    def __init__(self, app: "App", first_run: bool) -> None:
-        self.app, self.first_run, self.i = app, first_run, 0
-        self.steps = [s for s in TOUR_STEPS if self._target(s[0]) is not None]
+    def __init__(self, root, text_fn) -> None:
+        self.root, self.text_fn = root, text_fn
+        self.win, self.job, self.widget = None, None, None
+        for cls in ("TButton", "TCheckbutton", "TRadiobutton"):
+            root.bind_class(cls, "<Enter>", self._enter, add="+")
+            root.bind_class(cls, "<Leave>", self._hide, add="+")
+            root.bind_class(cls, "<ButtonPress>", self._hide, add="+")
+            root.bind_class(cls, "<Destroy>", self._hide, add="+")
+
+    def _enter(self, event) -> None:
+        w = event.widget
+        self._hide()
+        if getattr(w, "_qt_tip", False):
+            return
+        try:
+            text = self.text_fn(w)
+        except Exception:  # noqa: BLE001 - dica nunca pode derrubar a janela
+            return
+        if not text:
+            return
+        self.widget = w
+        self.job = self.root.after(500, lambda: self._show(w, text))  # só aparece se o mouse ficar parado
+
+    def _show(self, w, text: str) -> None:
+        self.job = None
+        try:
+            if not w.winfo_exists():
+                return
+            self.win = tk.Toplevel(w)
+            self.win.wm_overrideredirect(True)
+            x, y = w.winfo_rootx() + 12, w.winfo_rooty() + w.winfo_height() + 4
+            self.win.wm_geometry(f"+{x}+{y}")
+            tk.Label(self.win, text=text, bg="#fffbe6", fg="#222222", relief="solid", borderwidth=1,
+                     justify="left", wraplength=360, padx=6, pady=3).pack()
+        except tk.TclError:
+            self.win = None
+
+    def _hide(self, event=None) -> None:
+        if event is not None and event.type == tk.EventType.Destroy and event.widget is not self.widget:
+            return  # outro widget foi destruído: a dica atual continua
+        if self.job is not None:
+            try:
+                self.root.after_cancel(self.job)
+            except tk.TclError:
+                pass
+            self.job = None
+        if self.win is not None:
+            try:
+                self.win.destroy()
+            except tk.TclError:
+                pass
+            self.win = None
+        if event is None or event.type != tk.EventType.Enter:
+            self.widget = None
+
+
+class Tour:
+    """Tutorial guiado (básico ou avançado): destaca uma parte da janela de cada vez e explica o que fazer nela."""
+
+    RING = 3  # espessura da moldura em volta da parte destacada
+
+    def __init__(self, app: "App", kind: str = "basic") -> None:
+        self.app, self.kind, self.i = app, kind, 0
+        self.steps = [s for s in tutorial.steps_for(kind) if app._tut_target(s[0]) is not None]
         self.saved: tuple | None = None
+        self.ring: list[tk.Frame] = []
+        self._ring_geo: tuple | None = None
+        self._job: str | None = None
+        self.closed = False
         root = app.root
         self.win = tk.Toplevel(root)
-        self.win.title(i18n.tr("Primeiros passos"))
+        self.win._tip_ctx = "tour"
+        self.win.title(i18n.tr("Tutorial avançado" if kind == "advanced" else "Tutorial básico"))
         self.win.transient(root)
         self.win.resizable(False, False)
         self.win.configure(bg=CARD)
-        body = tk.Frame(self.win, bg=CARD, padx=16, pady=12)
+        body = tk.Frame(self.win, bg=CARD, padx=18, pady=14)
         body.pack(fill="both", expand=True)
         self.count = tk.Label(body, bg=CARD, fg=MUTED, font=app.f_small, anchor="w")
         self.count.pack(fill="x")
         self.title = tk.Label(body, bg=CARD, fg=INK, font=app.f_big, anchor="w", justify="left")
         self.title.pack(fill="x", pady=(2, 6))
-        self.text = tk.Label(body, bg=CARD, fg=INK, font=app.f_base, anchor="w", justify="left", wraplength=380)
+        self.text = tk.Label(body, bg=CARD, fg=INK, font=app.f_base, anchor="w", justify="left",
+                             wraplength=max(380, round(460 * app.scale)))
         self.text.pack(fill="x")
-        self.dont = tk.BooleanVar(value=True)
-        if first_run:
-            ttk.Checkbutton(body, text="Não mostrar de novo", variable=self.dont, style="Card.TCheckbutton").pack(
-                anchor="w", pady=(10, 0))
         bar = tk.Frame(body, bg=CARD)
-        bar.pack(fill="x", pady=(12, 0))
+        bar.pack(fill="x", pady=(14, 0))
         self.b_skip = ttk.Button(bar, text="Pular", command=self.close)
         self.b_skip.pack(side="left")
+        self.b_adv = ttk.Button(bar, text="Ver o tutorial avançado", command=self.go_advanced)
         self.b_next = ttk.Button(bar, text="Próximo", style="Accent.TButton", command=self.next)
         self.b_next.pack(side="right")
         self.b_back = ttk.Button(bar, text="Voltar", command=self.back)
@@ -262,18 +378,15 @@ class Tour:
         self.win.protocol("WM_DELETE_WINDOW", self.close)
         self.win.bind("<Escape>", lambda e: self.close())
         self.win.bind("<Return>", lambda e: self.next())
+        self.win.bind("<Right>", lambda e: self.next())
+        self.win.bind("<Left>", lambda e: self.back())
         self.show()
+        self._poll()
 
     def _target(self, key: str):
-        a = self.app
-        if key == "mods":
-            if a.sidebar.winfo_ismapped():
-                return a.cards.get("mods")
-            return a.btn_drawer if a.btn_drawer.winfo_ismapped() else None
-        if key == "help":
-            return a.btn_help
-        return a.cards.get(key)
+        return self.app._tut_target(key)
 
+    # ---------------------------------------------------------------- destaque
     def _unhighlight(self) -> None:
         if self.saved is not None:
             w, color, thick = self.saved
@@ -282,7 +395,70 @@ class Tour:
             except tk.TclError:
                 pass
             self.saved = None
+        self._clear_ring()
 
+    def _clear_ring(self) -> None:
+        for f in self.ring:
+            try:
+                f.destroy()
+            except tk.TclError:
+                pass
+        self.ring = []
+        self._ring_geo = None
+
+    def _visible_rect(self, target) -> tuple[int, int, int, int] | None:
+        """Retângulo do widget em coordenadas da janela principal, recortado pela área rolável. None = não aparece."""
+        root, a = self.app.root, self.app
+        x0 = target.winfo_rootx() - root.winfo_rootx()
+        y0 = target.winfo_rooty() - root.winfo_rooty()
+        x1, y1 = x0 + target.winfo_width(), y0 + target.winfo_height()
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            return None
+        if a.scroller._inside(target):
+            c = a.scroller.canvas
+            cx0, cy0 = c.winfo_rootx() - root.winfo_rootx(), c.winfo_rooty() - root.winfo_rooty()
+            x0, y0 = max(x0, cx0), max(y0, cy0)
+            x1, y1 = min(x1, cx0 + c.winfo_width()), min(y1, cy0 + c.winfo_height())
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            return None
+        return x0, y0, x1, y1
+
+    def _draw_ring(self, target) -> None:
+        """Moldura de 4 faixas por cima do widget (os widgets ttk não têm borda de destaque própria)."""
+        try:
+            rect = self._visible_rect(target)
+        except tk.TclError:
+            rect = None
+        if rect == self._ring_geo and self.ring:
+            return
+        self._clear_ring()
+        if rect is None:
+            return
+        self._ring_geo = rect
+        x0, y0, x1, y1 = rect
+        t, root = self.RING, self.app.root
+        pieces = ((x0 - t, y0 - t, x1 - x0 + 2 * t, t), (x0 - t, y1, x1 - x0 + 2 * t, t),
+                  (x0 - t, y0, t, y1 - y0), (x1, y0, t, y1 - y0))
+        for x, y, w, h in pieces:
+            f = tk.Frame(root, bg=ACCENT)
+            f.place(x=x, y=y, width=w, height=h)
+            f.lift()
+            self.ring.append(f)
+
+    def _poll(self) -> None:
+        """Acompanha rolagem e mudança de tamanho da janela: a moldura segue a parte destacada."""
+        if self.closed:
+            return
+        try:
+            if self.steps and self.saved is None:
+                target = self._target(self.steps[self.i][0])
+                if target is not None and not isinstance(target, tk.Frame):
+                    self._draw_ring(target)
+            self._job = self.win.after(300, self._poll)
+        except tk.TclError:
+            pass
+
+    # ---------------------------------------------------------------- passos
     def show(self) -> None:
         self._unhighlight()
         if not self.steps:
@@ -290,17 +466,30 @@ class Tour:
             return
         key, title, text = self.steps[self.i]
         n = len(self.steps)
+        last = self.i == n - 1
         self.count.configure(text=i18n.tr(f"Passo {self.i + 1} de {n}"))
         self.title.configure(text=i18n.tr(title))
         self.text.configure(text=i18n.tr(text))
         self.b_back.configure(state="normal" if self.i else "disabled")
-        self.b_next.configure(text=i18n.tr("Concluir" if self.i == n - 1 else "Próximo"))
+        self.b_next.configure(text=i18n.tr("Concluir" if last else "Próximo"))
+        if last and self.kind == "basic":
+            self.b_adv.configure(text=i18n.tr("Ver o tutorial avançado"))
+            self.b_adv.pack(side="left", padx=6)
+        else:
+            self.b_adv.pack_forget()
         target = self._target(key)
         if isinstance(target, tk.Frame):  # os cartões têm borda: ela vira o destaque
             self.saved = (target, str(target.cget("highlightbackground")), int(float(target.cget("highlightthickness"))))
             target.configure(highlightbackground=ACCENT, highlightthickness=4)
+        if target is not None:
+            try:
+                self.app.expand_advanced_for(target)  # parte dentro das opções avançadas: abre o quadro
+            except tk.TclError:
+                pass
         self._scroll_to(target)
         self.win.update_idletasks()
+        if target is not None and not isinstance(target, tk.Frame):
+            self._draw_ring(target)
         self._place(target)
 
     def _scroll_to(self, target) -> None:
@@ -315,18 +504,26 @@ class Tour:
             pass
 
     def _place(self, target) -> None:
-        """Põe a janelinha no lado da tela que não cobre a parte destacada."""
+        """Põe a janelinha onde não cobre a parte destacada (tenta embaixo/em cima e à direita/esquerda)."""
         root = self.app.root
         w, h = self.win.winfo_reqwidth(), self.win.winfo_reqheight()
         sw, sh = self.win.winfo_screenwidth(), self.win.winfo_screenheight()
         rx, ry, rw, rh = root.winfo_rootx(), root.winfo_rooty(), root.winfo_width(), root.winfo_height()
-        if target is not None:
-            ty = target.winfo_rooty() + target.winfo_height() // 2
-            in_top = ty < ry + rh // 2
-            x = rx + rw - w - 24 if target.winfo_rootx() < rx + rw // 2 and target.winfo_width() < rw // 2 else rx + (rw - w) // 2
-            y = ry + rh - h - 40 if in_top else ry + 70
-        else:
+        if target is None:
             x, y = rx + (rw - w) // 2, ry + (rh - h) // 2
+        else:
+            tx, ty = target.winfo_rootx(), target.winfo_rooty()
+            tw, th = target.winfo_width(), target.winfo_height()
+            cands = []
+            for cx in (rx + rw - w - 24, rx + (rw - w) // 2, rx + 24):
+                for cy in (ry + ry_off(rh, h, True), ry + ry_off(rh, h, False)):
+                    cands.append((cx, cy))
+            x, y = cands[0]
+            for cx, cy in cands:
+                cx, cy = max(0, min(cx, sw - w - 10)), max(0, min(cy, sh - h - 50))
+                if cx + w <= tx or cx >= tx + tw or cy + h <= ty or cy >= ty + th:  # não cobre o alvo
+                    x, y = cx, cy
+                    break
         x = max(0, min(x, sw - w - 10))
         y = max(0, min(y, sh - h - 50))
         self.win.geometry(f"+{x}+{y}")
@@ -343,8 +540,85 @@ class Tour:
             self.i -= 1
             self.show()
 
+    def go_advanced(self) -> None:
+        app = self.app
+        self.close()
+        app.start_tutorial("advanced")
+
     def close(self) -> None:
+        self.closed = True
         self._unhighlight()
+        if self._job is not None:
+            try:
+                self.win.after_cancel(self._job)
+            except tk.TclError:
+                pass
+            self._job = None
+        try:
+            self.win.destroy()
+        except tk.TclError:
+            pass
+        if self.app.tour is self:
+            self.app.tour = None
+
+
+def ry_off(root_h: int, win_h: int, bottom: bool) -> int:
+    """Deslocamento vertical da janelinha dentro da janela principal: embaixo (True) ou em cima (False)."""
+    return max(0, root_h - win_h - 40) if bottom else 70
+
+
+class Welcome:
+    """Janela de boas-vindas: escolher o tutorial básico, o avançado ou nenhum."""
+
+    def __init__(self, app: "App", first_run: bool) -> None:
+        self.app, self.first_run = app, first_run
+        root = app.root
+        self.win = tk.Toplevel(root)
+        self.win._tip_ctx = "welcome"
+        self.win.title(i18n.tr("Tutoriais"))
+        self.win.transient(root)
+        self.win.resizable(False, False)
+        self.win.configure(bg=CARD)
+        wrap = max(380, round(420 * app.scale))
+        body = tk.Frame(self.win, bg=CARD, padx=26, pady=20)
+        body.pack(fill="both", expand=True)
+        head = "Bem-vindo ao Kenshi Quick Translator!" if first_run else "Tutoriais"
+        tk.Label(body, text=i18n.tr(head), bg=CARD, fg=INK, font=app.f_title, anchor="w", justify="left",
+                 wraplength=wrap).pack(fill="x")
+        tk.Label(body, text=i18n.tr("Traduza mods do Kenshi sem estragar os marcadores do jogo. Como você quer começar?"),
+                 bg=CARD, fg=MUTED, font=app.f_base, anchor="w", justify="left", wraplength=wrap).pack(fill="x", pady=(4, 14))
+        for kind, label, desc, style in (
+            ("basic", "Tutorial básico",
+             "Só o essencial: escolher o mod, traduzir, conferir e instalar. Leva cerca de 2 minutos.", "Primary.TButton"),
+            ("advanced", "Tutorial avançado",
+             "Explica cada parte da tela e cada botão, um por um, na ordem em que aparecem.", "Accent.TButton"),
+        ):
+            ttk.Button(body, text=i18n.tr(label), style=style, command=lambda k=kind: self.choose(k)).pack(fill="x")
+            tk.Label(body, text=i18n.tr(desc), bg=CARD, fg=MUTED, font=app.f_small, anchor="w", justify="left",
+                     wraplength=wrap).pack(fill="x", pady=(3, 12))
+        self.dont = tk.BooleanVar(value=True)
+        if first_run:
+            ttk.Checkbutton(body, text=i18n.tr("Não mostrar isto ao abrir o programa"), variable=self.dont,
+                            style="Card.TCheckbutton").pack(anchor="w", pady=(2, 0))
+        tk.Label(body, text=i18n.tr("Você pode abrir os tutoriais quando quiser, no botão “Tutorial” no topo da janela."),
+                 bg=CARD, fg=MUTED, font=app.f_small, anchor="w", justify="left", wraplength=wrap).pack(fill="x", pady=(6, 10))
+        ttk.Button(body, text=i18n.tr("Agora não, vou explorar sozinho"), command=self.close).pack(anchor="e")
+        self.win.protocol("WM_DELETE_WINDOW", self.close)
+        self.win.bind("<Escape>", lambda e: self.close())
+        self.win.bind("<Return>", lambda e: self.choose("basic"))
+        self.win.update_idletasks()
+        w, h = self.win.winfo_reqwidth(), self.win.winfo_reqheight()
+        sw, sh = self.win.winfo_screenwidth(), self.win.winfo_screenheight()
+        x = root.winfo_rootx() + (root.winfo_width() - w) // 2
+        y = root.winfo_rooty() + (root.winfo_height() - h) // 3
+        self.win.geometry(f"+{max(0, min(x, sw - w - 10))}+{max(0, min(y, sh - h - 50))}")
+        try:
+            self.win.lift()
+            self.win.focus_force()
+        except tk.TclError:
+            pass
+
+    def _finish(self) -> None:
         if self.first_run and self.dont.get():
             self.app.cfg.tour_done = True
             try:
@@ -355,7 +629,16 @@ class Tour:
             self.win.destroy()
         except tk.TclError:
             pass
-        self.app.tour = None
+        if self.app.welcome is self:
+            self.app.welcome = None
+
+    def choose(self, kind: str) -> None:
+        app = self.app
+        self._finish()
+        app.start_tutorial(kind)
+
+    def close(self) -> None:
+        self._finish()
 
 
 HELP_TEXT = (
@@ -473,7 +756,7 @@ class ScrollFrame(ttk.Frame):
         self.canvas.yview_scroll(step * 2, "units")
 
 
-class App(ActionsMixin):
+class App(ActionsMixin, ToolsMixin):
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.session = Session()
@@ -502,9 +785,12 @@ class App(ActionsMixin):
         self._icon_iids: dict[Path, str] = {}
         self._icon_after: str | None = None
         self.cards: dict[str, tk.Frame] = {}
+        self.tt: dict[str, object] = {}  # partes da janela que o tutorial destaca (ver _tut_target)
         self.tour: Tour | None = None
+        self.welcome: Welcome | None = None
 
         root.title(f"Kenshi Quick Translator {__version__}")
+        self._install_error_hook()
         self._restore_window()
         set_palette(self.cfg.theme)
         root.configure(bg=BG)  # depois da paleta: senão a janela abre com o fundo do tema claro
@@ -516,6 +802,7 @@ class App(ActionsMixin):
         self._build_body()
         self._fill_from_config()
         self._attach_tips()  # antes do i18n.apply: ainda lê os textos originais em português
+        self.auto_tips = AutoTips(root, self._auto_tip_text)  # todo botão sem dica própria, em qualquer janela
         self.refresh_mods()
         i18n.apply(root)
         self._recolor(root, {})  # widgets de cor padrão (caixas de texto) também seguem o tema
@@ -526,7 +813,7 @@ class App(ActionsMixin):
         self._bind_shortcuts()
         root.after(100, self._poll)
         if not self.cfg.tour_done:
-            root.after(1200, lambda: self.open_tour(first_run=True))
+            root.after(1200, lambda: self.open_tutorial_menu(first_run=True))
 
     # ================================================================ estilo
     def _fonts(self) -> None:
@@ -581,16 +868,29 @@ class App(ActionsMixin):
         st.map("Card.TCheckbutton", background=[("active", CARD)],
                indicatorbackground=[("selected", GREEN), ("active", BTN_ACT), ("!selected", BTN)],
                indicatorforeground=[("selected", "white")])
-        st.configure("TButton", padding=(10, 5), background=BTN, foreground=INK, borderwidth=0)
+        st.configure("TButton", padding=(10, 5), background=BTN, foreground=INK, borderwidth=1, bordercolor=LINE,
+                     lightcolor=BTN, darkcolor=BTN, focuscolor=BTN)
+        self.root.option_add("*TButton.cursor", "hand2")  # mãozinha nos botões
+        self.root.option_add("*TCheckbutton.cursor", "hand2")
         st.map("TButton", background=[("active", BTN_ACT), ("disabled", BTN_OFF)], foreground=[("disabled", MUTED)])
-        st.configure("Primary.TButton", padding=(16, 9), background=GREEN, foreground="white", font=self.f_big)
-        st.map("Primary.TButton", background=[("active", GREEN_DK), ("disabled", GREEN_OFF)],
+        st.configure("TMenubutton", padding=(10 + round(18 * self.scale), 5, 10, 5), anchor="center", background=BTN, foreground=INK, borderwidth=1, bordercolor=LINE,
+                     lightcolor=BTN, darkcolor=BTN, arrowcolor=INK)
+        st.map("TMenubutton", background=[("active", BTN_ACT), ("disabled", BTN_OFF)], foreground=[("disabled", MUTED)])
+        self.root.option_add("*TMenubutton.cursor", "hand2")
+        st.configure("Primary.TButton", padding=(16, 9), background=GREEN, foreground="white", font=self.f_big,
+                     bordercolor=GREEN, lightcolor=GREEN, darkcolor=GREEN, focuscolor=GREEN)
+        st.map("Primary.TButton", bordercolor=[("disabled", GREEN_OFF)], lightcolor=[("disabled", GREEN_OFF)], darkcolor=[("disabled", GREEN_OFF)],
+               background=[("active", GREEN_DK), ("disabled", GREEN_OFF)],
                foreground=[("disabled", GREEN_OFF_FG)])
-        st.configure("Accent.TButton", padding=(12, 8), background=ACCENT, foreground="white", font=self.f_bold)
-        st.map("Accent.TButton", background=[("active", ACC_ACT), ("disabled", ACC_OFF)],
+        st.configure("Accent.TButton", padding=(12, 8), background=ACCENT, foreground="white", font=self.f_bold,
+                     bordercolor=ACCENT, lightcolor=ACCENT, darkcolor=ACCENT, focuscolor=ACCENT)
+        st.map("Accent.TButton", bordercolor=[("disabled", ACC_OFF)], lightcolor=[("disabled", ACC_OFF)], darkcolor=[("disabled", ACC_OFF)],
+               background=[("active", ACC_ACT), ("disabled", ACC_OFF)],
                foreground=[("disabled", ACC_OFF_FG)])
-        st.configure("Stop.TButton", padding=(12, 8), background=RED, foreground="white", font=self.f_bold)
-        st.map("Stop.TButton", background=[("active", RED_ACT), ("disabled", RED_OFF)],
+        st.configure("Stop.TButton", padding=(12, 8), background=RED, foreground="white", font=self.f_bold,
+                     bordercolor=RED, lightcolor=RED, darkcolor=RED, focuscolor=RED)
+        st.map("Stop.TButton", bordercolor=[("disabled", RED_OFF)], lightcolor=[("disabled", RED_OFF)], darkcolor=[("disabled", RED_OFF)],
+               background=[("active", RED_ACT), ("disabled", RED_OFF)],
                foreground=[("disabled", RED_OFF_FG)])
         st.configure("Treeview", rowheight=max(20, round(26 * self.scale)), background=CARD, fieldbackground=CARD, foreground=INK, borderwidth=0)
         st.configure("Treeview.Heading", font=self.f_bold, background=HEADING, foreground=INK, padding=(6, 5), relief="flat")
@@ -834,6 +1134,15 @@ class App(ActionsMixin):
         self.cards[{"1": "one", "2": "how", "3": "review"}.get(number, number)] = box
         return inner
 
+    def _fill_more_menu(self) -> None:
+        """Monta o menu "Mais ações" na hora de abrir (assim já vem no idioma da interface)."""
+        m = self.more_menu
+        m.delete(0, "end")
+        m.add_command(label=i18n.tr("Abrir pasta do mod"), command=self.open_mod_folder)
+        m.add_command(label=i18n.tr("Abrir pasta dos projetos"), command=self.open_projects)
+        m.add_separator()
+        m.add_command(label=i18n.tr("Zerar tradução deste mod"), command=self.reset_selected)
+
     def _build_header(self) -> None:
         bar = tk.Frame(self.root, bg=HEAD)
         bar.pack(fill="x")
@@ -845,11 +1154,12 @@ class App(ActionsMixin):
         self.galaxy = None
         self.btn_help = ttk.Button(bar, text="?  Ajuda",
                                    command=lambda: messagebox.showinfo("Como usar", i18n.help_text(HELP_TEXT)))
-        self.btn_help.pack(side="right", padx=(0, 12), pady=8)
-        ttk.Button(bar, text="⚙  Configurações", command=self.open_settings).pack(side="right", padx=6, pady=8)
-        ttk.Button(bar, text="⌨  Atalhos", command=self.show_shortcuts).pack(side="right", padx=0, pady=8)
-        ttk.Button(bar, text="▶  Passo a passo", command=lambda: self.open_tour(first_run=False)).pack(
-            side="right", padx=6, pady=8)
+        self.btn_help.pack(side="right", padx=(4, 12), pady=8)
+        self.btn_settings = ttk.Button(bar, text="⚙  Configurações", command=self.open_settings)
+        self.btn_settings.pack(side="right", padx=4, pady=8)
+        ttk.Button(bar, text="⌨  Atalhos", command=self.show_shortcuts).pack(side="right", padx=4, pady=8)
+        self.btn_tutorial = ttk.Button(bar, text="▶  Tutorial", command=lambda: self.open_tutorial_menu(first_run=False))
+        self.btn_tutorial.pack(side="right", padx=4, pady=8)
         self.btn_drawer = ttk.Button(bar, text="☰  Mods", command=self.toggle_drawer)  # só aparece em janela estreita
 
     def _build_body(self) -> None:
@@ -927,16 +1237,21 @@ class App(ActionsMixin):
                  justify="left").pack(fill="x", padx=12)
         self.empty_hint.pack(fill="x", padx=12)
 
-        bb = ttk.Frame(box, style="Card.TFrame")
-        bb.pack(fill="x", padx=12, pady=(6, 4))
-        ttk.Button(bb, text="⟳ Atualizar (F5)", command=self.refresh_mods).pack(side="left")
-        ttk.Button(bb, text="Abrir arquivo…", command=self.pick_file).pack(side="left", padx=6)
-        ttk.Button(bb, text="Pasta do Kenshi…", command=self.pick_kenshi).pack(side="left")
-        ttk.Button(bb, text="Copiar mod para a pasta do jogo", command=self.copy_to_game).pack(side="left", padx=6)
-        bb2 = ttk.Frame(box, style="Card.TFrame")
-        bb2.pack(fill="x", padx=12, pady=(0, 4))
-        ttk.Button(bb2, text="Zerar tradução deste mod", command=self.reset_selected).pack(side="left")
-        ttk.Button(bb2, text="Abrir pasta dos projetos", command=self.open_projects).pack(side="left", padx=6)
+        bb = ttk.Frame(box, style="Card.TFrame")  # botões em grade: nenhum fica cortado na barra estreita
+        bb.pack(fill="x", padx=12, pady=(6, 6))
+        self.tt["mod_buttons"] = bb
+        bb.columnconfigure(0, weight=1)
+        bb.columnconfigure(1, weight=1)
+        ttk.Button(bb, text="⟳ Atualizar (F5)", command=self.refresh_mods).grid(row=0, column=0, sticky="ew", padx=(0, 3), pady=2)
+        ttk.Button(bb, text="+  Abrir arquivo…", command=self.pick_file).grid(row=0, column=1, sticky="ew", padx=(3, 0), pady=2)
+        ttk.Button(bb, text="⌂  Pasta do Kenshi…", command=self.pick_kenshi).grid(row=1, column=0, sticky="ew", padx=(0, 3), pady=2)
+        # o que se usa pouco fica no menu "Mais": a barra estreita fica com 4 botões em vez de 7
+        self.more_menu = tk.Menu(bb, tearoff=0, postcommand=self._fill_more_menu, bg=CARD, fg=INK,
+                                 activebackground=ACCENT, activeforeground="white", relief="flat", bd=1)
+        self.btn_more = ttk.Menubutton(bb, text="Mais ações", menu=self.more_menu, direction="below")
+        self.btn_more.grid(row=1, column=1, sticky="ew", padx=(3, 0), pady=2)
+        ttk.Button(bb, text="→  Copiar mod para a pasta do jogo", command=self.copy_to_game).grid(
+            row=2, column=0, columnspan=2, sticky="ew", pady=2)
         tk.Label(box, text="Dica: Ctrl+clique escolhe vários mods para traduzir em fila.", bg=CARD, fg=MUTED,
                  font=self.f_small).pack(anchor="w", padx=12, pady=(0, 10))
 
@@ -945,11 +1260,11 @@ class App(ActionsMixin):
         # ---- 1. mod escolhido
         c1 = self._card(parent, "1", "Mod escolhido")
         self.mod_var = tk.StringVar(value="Nenhum mod aberto")
-        ttk.Label(c1, textvariable=self.mod_var, style="Bold.TLabel").pack(anchor="w")
+        ttk.Label(c1, textvariable=self.mod_var, style="Bold.TLabel").pack(side="left", anchor="n")
         self.info_var = tk.StringVar(value="Clique em um mod na lista da esquerda para começar.")
         self.info_label = tk.Label(c1, textvariable=self.info_var, bg=CARD, fg=MUTED, font=self.f_base,
-                                   justify="left", anchor="w", wraplength=820)
-        self.info_label.pack(fill="x", anchor="w", pady=(2, 0))
+                                   justify="left", anchor="w", wraplength=600)
+        self.info_label.pack(side="left", fill="x", expand=True, anchor="n", padx=(14, 0))
 
         # ---- 2. como traduzir
         c2 = self._card(parent, "2", "Como traduzir")
@@ -959,6 +1274,20 @@ class App(ActionsMixin):
         left.pack(side="left", fill="both", expand=True, padx=(0, 18))
         right = ttk.Frame(cols, style="Card.TFrame")
         right.pack(side="left", fill="both", expand=True)
+
+        # Opções avançadas: recolhidas por padrão, para o essencial (idioma, serviço, Traduzir) ficar limpo
+        advbar = ttk.Frame(c2, style="Card.TFrame")
+        advbar.pack(fill="x", pady=(8, 0))
+        self.adv_btn = ttk.Button(advbar, text="▸  Opções avançadas", command=self.toggle_advanced)
+        self.adv_btn.pack(side="left")
+        self.adv_summary_var = tk.StringVar()
+        ttk.Label(advbar, textvariable=self.adv_summary_var, style="Muted.TLabel").pack(side="left", padx=10)
+        self.adv_frame = ttk.Frame(c2, style="Card.TFrame")
+        advl = ttk.Frame(self.adv_frame, style="Card.TFrame")
+        advl.pack(side="left", fill="both", expand=True, padx=(0, 18), pady=(6, 0))
+        advr = ttk.Frame(self.adv_frame, style="Card.TFrame")
+        advr.pack(side="left", fill="both", expand=True, pady=(6, 0))
+        self.adv_open = False
 
         self.src_var, self.dst_var = tk.StringVar(), tk.StringVar()
         self.prov_var, self.key_var, self.url_var = tk.StringVar(), tk.StringVar(), tk.StringVar()
@@ -972,6 +1301,7 @@ class App(ActionsMixin):
         # esquerda: idiomas
         g = ttk.Frame(left, style="Card.TFrame")
         g.pack(fill="x")
+        self.tt["langs"] = g
         ttk.Label(g, text="Idioma do mod:", style="Card.TLabel").grid(row=0, column=0, sticky="w", pady=3)
         self.src_box = ttk.Combobox(g, textvariable=self.src_var, state="readonly", width=28,
                                     values=[lang_display(c) for c in LANGUAGES])
@@ -982,25 +1312,33 @@ class App(ActionsMixin):
         self.dst_box.grid(row=1, column=1, sticky="w", padx=8, pady=3)
         self.src_box.bind("<<ComboboxSelected>>", self.on_languages)
         self.dst_box.bind("<<ComboboxSelected>>", self.on_languages)
+        self.gloss_var = tk.StringVar()
+        self._gloss_lang_seen = self.cfg.target_lang  # para só perguntar quando o IDIOMA DE DESTINO muda
+        ttk.Label(g, text="Glossário:", style="Card.TLabel").grid(row=2, column=0, sticky="w", pady=3)
+        ttk.Label(g, textvariable=self.gloss_var, style="Muted.TLabel").grid(row=2, column=1, sticky="w", padx=8, pady=3)
 
-        ttk.Checkbutton(left, text="Este mod tem mais de um idioma (ex.: inglês e chinês)", variable=self.multi_var,
-                        style="Card.TCheckbutton", command=self.on_multi_toggle).pack(anchor="w", pady=(6, 2))
-        self.multi_frame = ttk.Frame(left, style="Card.TFrame")
+        ttk.Checkbutton(advl, text="Este mod tem mais de um idioma (ex.: inglês e chinês)", variable=self.multi_var,
+                        style="Card.TCheckbutton", command=self.on_multi_toggle).pack(anchor="w", pady=(0, 2))
+        self.multi_frame = ttk.Frame(advl, style="Card.TFrame")
         ttk.Label(self.multi_frame, text="Idiomas que o mod tem (cada texto é identificado sozinho):",
                   style="Muted.TLabel").grid(row=0, column=0, columnspan=4, sticky="w")
         for i, code in enumerate(MULTI_CHOICES):
             cb = ttk.Checkbutton(self.multi_frame, text=lang_name(code, i18n.language()), variable=self.src_checks[code],
                                  style="Card.TCheckbutton", command=self.on_sources_changed)
             cb.grid(row=1 + i // 4, column=i % 4, sticky="w", padx=(0, 12))
+            cb._tip_text = TIP_MULTI_LANG
             self.src_check_widgets[code] = cb
-        ttk.Checkbutton(left, text="Não traduzir nomes de personagens", variable=self.names_var,
-                        style="Card.TCheckbutton").pack(anchor="w", pady=(6, 0))
+        ttk.Checkbutton(advl, text="Não traduzir nomes de personagens", variable=self.names_var,
+                        style="Card.TCheckbutton", command=self._adv_summary).pack(anchor="w", pady=(6, 0))
+        ttk.Checkbutton(advl, text="Instalar no jogo ao terminar (fila)", variable=self.install_var,
+                        style="Card.TCheckbutton", command=self._adv_summary).pack(anchor="w", pady=(6, 0))
 
         # direita: serviço e velocidade
         r = ttk.Frame(right, style="Card.TFrame")
         r.pack(fill="x")
+        self.tt["service"] = r
         ttk.Label(r, text="Serviço:", style="Card.TLabel").grid(row=0, column=0, sticky="w", pady=3)
-        self.prov_box = ttk.Combobox(r, textvariable=self.prov_var, state="readonly", width=34,
+        self.prov_box = ttk.Combobox(r, textvariable=self.prov_var, state="readonly", width=30,
                                      values=[s.label for s in SPECS])
         self.prov_box.grid(row=0, column=1, columnspan=2, sticky="w", padx=8, pady=3)
         self.prov_box.bind("<<ComboboxSelected>>", self.on_provider)
@@ -1015,31 +1353,35 @@ class App(ActionsMixin):
         self.key_hint.grid(row=3, column=0, columnspan=3, sticky="w", padx=0, pady=(0, 2))
         self.url_label.grid(row=2, column=0, sticky="w", pady=3)
         self.url_entry.grid(row=2, column=1, sticky="w", padx=8, pady=3)
-        ttk.Button(r, text="Testar serviço", command=self.test_provider).grid(row=1, column=2, padx=4)
+        ttk.Button(r, text="Testar serviço", command=self.test_provider).grid(row=0, column=3, padx=(4, 14))
         self.svc_btn = ttk.Button(r, text="Serviços do agregado (IAs, DeepL, Google Cloud)…", command=self.open_services)
         self.svc_btn.grid(row=4, column=0, columnspan=3, sticky="w", pady=(4, 2))
 
-        sp = ttk.Frame(right, style="Card.TFrame")
+        sp = ttk.Frame(advr, style="Card.TFrame")
         sp.pack(fill="x", pady=(8, 0))
+        self.tt["speed"] = sp
         ttk.Label(sp, text="Velocidade:", style="Card.TLabel").pack(side="left")
         self.speed_scale = ttk.Scale(sp, from_=1, to=12, orient="horizontal", length=170,
                                      command=self.on_speed)
         self.speed_scale.pack(side="left", padx=8)
         self.speed_label = ttk.Label(sp, text="3 partes ao mesmo tempo", style="Bold.TLabel")
         self.speed_label.pack(side="left")
-        self.speed_hint = tk.Label(right, bg=CARD, fg=MUTED, font=self.f_small, justify="left", anchor="w",
+        self.speed_hint = tk.Label(advr, bg=CARD, fg=MUTED, font=self.f_small, justify="left", anchor="w",
                                    wraplength=420,
                                    text="Cada parte é um pedido ao serviço. Mais partes = mais rápido, até o limite do "
                                         "serviço. Se ele reclamar, o programa diminui sozinho.")
         self.speed_hint.pack(fill="x", anchor="w")
 
         # barra de ações
-        ttk.Separator(c2, orient="horizontal").pack(fill="x", pady=8)
+        self._adv_sep = ttk.Separator(c2, orient="horizontal")
+        self._adv_sep.pack(fill="x", pady=8)
         act = ttk.Frame(c2, style="Card.TFrame")
         act.pack(fill="x")
+        self.tt["actions"] = act
         self.btn_translate = ttk.Button(act, text="▶  Traduzir este mod  (Ctrl+T)", style="Primary.TButton",
                                         command=lambda: self.start_translate(False))
         self.btn_translate.pack(side="left")
+        self.tt["go"] = self.btn_translate
         self.btn_many = ttk.Button(act, text="▶▶  Traduzir selecionados  (Ctrl+Shift+T)", style="Accent.TButton",
                                    command=self.start_many)
         self.btn_many.pack(side="left", padx=8)
@@ -1047,20 +1389,22 @@ class App(ActionsMixin):
         self.btn_stop.pack(side="left")
         act2 = ttk.Frame(c2, style="Card.TFrame")  # segunda linha: cabe em janelas estreitas
         act2.pack(fill="x", pady=(8, 0))
+        self.tt["actions2"] = act2
         self.btn_redo = ttk.Button(act2, text="Refazer automáticas", command=lambda: self.start_translate(True))
         self.btn_redo.pack(side="left")
         self.btn_second = ttk.Button(act2, text="Segunda passada nos “Conferir”…", command=self.second_pass_ui)
         self.btn_second.pack(side="left", padx=6)
-        ttk.Checkbutton(act2, text="Instalar no jogo ao terminar (fila)", variable=self.install_var,
-                        style="Card.TCheckbutton").pack(side="left", padx=(14, 0))
 
-        pb = ttk.Frame(c2, style="Card.TFrame")
-        pb.pack(fill="x", pady=(8, 0))
+        prog = ttk.Frame(c2, style="Card.TFrame")  # barra + status + gráfico + luzes dos serviços
+        prog.pack(fill="x", pady=(8, 0))
+        self.tt["progress"] = prog
+        pb = ttk.Frame(prog, style="Card.TFrame")
+        pb.pack(fill="x")
         self.progress = ttk.Progressbar(pb, mode="determinate")
         self.progress.pack(fill="x")
         self.status_var = tk.StringVar(value="Escolha um mod na lista para começar.")
         self.eta_var = tk.StringVar(value="")
-        line = ttk.Frame(c2, style="Card.TFrame")
+        line = ttk.Frame(prog, style="Card.TFrame")
         line.pack(fill="x", pady=(4, 0))
         ttk.Label(line, textvariable=self.status_var, style="Card.TLabel").pack(side="left")
         ttk.Label(line, textvariable=self.eta_var, style="Muted.TLabel").pack(side="right")
@@ -1070,7 +1414,7 @@ class App(ActionsMixin):
         self.svc_var = tk.StringVar(value="")  # (a linha de texto foi trocada pelas luzes; mantida vazia)
         self.notice_var = tk.StringVar(value="")
         self._live_provider = None
-        self.svc_frame = ttk.Frame(c2, style="Card.TFrame")
+        self.svc_frame = ttk.Frame(prog, style="Card.TFrame")
         self.svc_frame.pack(fill="x")
         self._svc_widgets: dict[str, tuple[tk.Label, tk.Label]] = {}
         self._svc_info: dict[str, str] = {}
@@ -1081,6 +1425,7 @@ class App(ActionsMixin):
         c3 = self._card(parent, "3", "Revise e gere o mod", expand=True)
         flt = ttk.Frame(c3, style="Card.TFrame")
         flt.pack(fill="x")
+        self.tt["filters"] = flt
         ttk.Label(flt, text="Mostrar:", style="Card.TLabel").pack(side="left")
         self.filter_var = tk.StringVar(value=i18n.tr(FILTER_LABEL["todos"]))
         fbox = ttk.Combobox(flt, textvariable=self.filter_var, state="readonly", width=14,
@@ -1101,6 +1446,7 @@ class App(ActionsMixin):
 
         mid = ttk.Frame(c3, style="Card.TFrame")
         mid.pack(fill="both", expand=True, pady=(6, 0))
+        self.tt["table"] = mid
         self.tree = ttk.Treeview(mid, columns=("estado", "idioma", "original", "traducao"), show="headings",
                                  selectmode="browse", height=5)
         for c, title, w in (("estado", "Estado", 86), ("idioma", "Idioma", 78), ("original", "Original", 360),
@@ -1117,6 +1463,7 @@ class App(ActionsMixin):
 
         ed = ttk.Frame(c3, style="Card.TFrame")
         ed.pack(fill="x", pady=(8, 0))
+        self.tt["editor"] = ed
         lf = ttk.Frame(ed, style="Card.TFrame")
         lf.pack(side="left", fill="both", expand=True, padx=(0, 6))
         ttk.Label(lf, text="Original", style="Muted.TLabel").pack(anchor="w")
@@ -1135,29 +1482,36 @@ class App(ActionsMixin):
 
         eb = ttk.Frame(c3, style="Card.TFrame")
         eb.pack(fill="x", pady=(6, 0))
+        self.tt["editbtns"] = eb
         self.check_var = tk.StringVar(value="")
         self.check_label = tk.Label(eb, textvariable=self.check_var, bg=CARD, fg=MUTED, font=self.f_bold)
         self.check_label.pack(side="left")
         self.ctx_var = tk.StringVar(value="")
         tk.Label(eb, textvariable=self.ctx_var, bg=CARD, fg=MUTED, font=self.f_small).pack(side="left", padx=12)
-        ttk.Button(eb, text="Aplicar e próximo (Ctrl+Enter)", command=self.apply_edit).pack(side="right")
+        ttk.Button(eb, text="✓  Aplicar e próximo (Ctrl+Enter)", command=self.apply_edit).pack(side="right")
         ttk.Button(eb, text="Copiar original", command=self.copy_source).pack(side="right", padx=6)
         ttk.Button(eb, text="↶ Desfazer edição", command=self.undo_edit_ui).pack(side="right")
 
-        ob = ttk.Frame(c3, style="Card.TFrame")
+        ob = ttk.Frame(c3, style="Card.TFrame")  # linha de baixo: o que gera/instala o mod
         ob.pack(fill="x", pady=(10, 0))
+        self.tt["build"] = ob
+        ob2 = ttk.Frame(c3, style="Card.TFrame")  # linha de cima: glossário, ferramentas e arquivos PO
+        ob2.pack(fill="x", pady=(6, 0))
+        self.tt["tools"] = ob2
         self.btn_build = ttk.Button(ob, text="Gerar mod de tradução…  (F6)", style="Accent.TButton", command=self.build_mod)
         self.btn_build.pack(side="left")
-        self.btn_install = ttk.Button(ob, text="Instalar no jogo  (F7)", style="Accent.TButton", command=self.install_mod)
+        self.btn_install = ttk.Button(ob, text="⬇  Instalar no jogo  (F7)", style="Accent.TButton", command=self.install_mod)
         self.btn_install.pack(side="left", padx=8)
-        self.btn_restore = ttk.Button(ob, text="Restaurar o original", command=self.restore_original_ui)
+        self.btn_restore = ttk.Button(ob, text="↶  Restaurar o original", command=self.restore_original_ui)
         self.btn_restore.pack(side="left")
-        ttk.Button(ob, text="Glossário…", command=self.open_glossary).pack(side="left", padx=(14, 0))
-        ttk.Button(ob, text="Exportar PO…", command=self.export_po).pack(side="left", padx=6)
-        ttk.Button(ob, text="Importar PO…", command=self.import_po).pack(side="left")
+        ttk.Button(ob2, text="Glossário…", command=self.open_glossary).pack(side="left")
+        ttk.Button(ob2, text="Ferramentas…", command=self.open_tools).pack(side="left", padx=6)
+        ttk.Button(ob2, text="Modo simples", command=self.open_simple).pack(side="left")
+        ttk.Button(ob2, text="Exportar PO…", command=self.export_po).pack(side="left", padx=6)
+        ttk.Button(ob2, text="Importar PO…", command=self.import_po).pack(side="left")
 
         # Em janela baixa, quem encolhe é a tabela: editor e botões de baixo têm prioridade de espaço.
-        for frame, pad in ((ob, (10, 0)), (eb, (6, 0)), (ed, (8, 0))):
+        for frame, pad in ((ob, (6, 0)), (ob2, (10, 0)), (eb, (6, 0)), (ed, (8, 0))):
             frame.pack_forget()
             frame.pack(side="bottom", fill="x", pady=pad)
         mid.pack_forget()
@@ -1170,6 +1524,7 @@ class App(ActionsMixin):
         self.modsort_var.set(i18n.tr(MODSORT_LABEL.get(c.mod_sort, MODSORT_LABEL["padrao"])))
         self.src_var.set(lang_display(c.source_lang if c.source_lang in LANGUAGES else "auto"))
         self.dst_var.set(lang_display(c.target_lang if c.target_lang in LANGUAGES else "pt-BR"))
+        self.refresh_glossary_label()
         self.prov_var.set(next((s.label for s in SPECS if s.key == c.provider), SPECS[0].label))
         self.key_var.set(c.api_key)
         self.url_var.set(c.server_url)
@@ -1224,6 +1579,47 @@ class App(ActionsMixin):
     def on_speed(self, value=None) -> None:
         n = max(1, min(12, int(round(float(value if value is not None else self.speed_scale.get())))))
         self.speed_label.configure(text=f"{n} parte{'s' if n > 1 else ''} ao mesmo tempo")
+        self._adv_summary()
+
+    def toggle_advanced(self, open_: bool | None = None) -> None:
+        """Abre ou fecha o quadro "Opções avançadas" (velocidade, vários idiomas, nomes, instalar ao terminar)."""
+        want = (not self.adv_open) if open_ is None else bool(open_)
+        if want == self.adv_open:
+            return
+        self.adv_open = want
+        if want:
+            self.adv_frame.pack(fill="x", before=self._adv_sep)
+        else:
+            self.adv_frame.pack_forget()
+        self.adv_btn.configure(text=i18n.tr("▾  Opções avançadas" if want else "▸  Opções avançadas"))
+        self._adv_summary()
+
+    def expand_advanced_for(self, target) -> None:
+        """Usado pelo tutorial: se a parte explicada está dentro das opções avançadas, abre o quadro."""
+        w = target
+        while w is not None:
+            if w is self.adv_frame:
+                self.toggle_advanced(True)
+                self.root.update_idletasks()
+                return
+            w = getattr(w, "master", None)
+
+    def _adv_summary(self) -> None:
+        """Resumo ao lado do botão (só aparece com o quadro fechado): o que está ligado lá dentro."""
+        if self.adv_open:
+            self.adv_summary_var.set("")
+            return
+        tr = i18n.tr
+        try:
+            n = max(1, min(12, int(round(float(self.speed_scale.get())))))
+        except (tk.TclError, ValueError):
+            n = 3
+        parts = [f"{tr('velocidade')} {n}", tr("nomes preservados" if self.names_var.get() else "nomes traduzidos")]
+        if self.multi_var.get():
+            parts.append(tr("vários idiomas"))
+        if self.install_var.get():
+            parts.append(tr("instala ao terminar"))
+        self.adv_summary_var.set("  ·  ".join(parts))
 
     def on_multi_toggle(self, initial: bool = False) -> None:
         multi = bool(self.multi_var.get())
@@ -1238,6 +1634,9 @@ class App(ActionsMixin):
             self.multi_frame.pack_forget()
             self.src_box.configure(state="readonly")
         self._set_idioma_column(multi)
+        if multi and not initial:
+            self.toggle_advanced(True)  # a lista de idiomas vive no quadro avançado
+        self._adv_summary()
         if not initial and self.session.project is not None:
             self.refresh_table()
 
@@ -1253,10 +1652,50 @@ class App(ActionsMixin):
 
     def on_languages(self, event=None) -> None:
         """Trocar o idioma de destino abre outro projeto do mesmo mod (cada um guarda o seu)."""
-        self._sync_cfg()
-        if self.session.mod_path is not None and not self._busy():
-            self.load_mod(self.session.mod_path, force=True)
-        self.refresh_mods(keep_selection=True)
+        try:
+            self._sync_cfg()
+            dst_changed = self.cfg.target_lang != self._gloss_lang_seen
+            self._gloss_lang_seen = self.cfg.target_lang
+            if self.session.mod_path is not None and not self._busy():
+                self.load_mod(self.session.mod_path, force=True)
+            self.refresh_mods(keep_selection=True)
+            self.refresh_glossary_label()
+            if dst_changed and not self._busy():
+                self._glossary_checkpoint(gate=False)  # idioma novo sem glossário: pergunta o que fazer
+        except Exception as e:  # noqa: BLE001 - erro vira aviso na tela, nunca fecha o programa
+            self.last_error = format_exc(type(e), e, e.__traceback__)
+            log_error(self.last_error)
+            self.status_var.set(f"Erro ao trocar o idioma: {type(e).__name__}: {e}")
+
+    def refresh_glossary_label(self) -> None:
+        """Mostra qual glossário vale agora (o do idioma de destino) e quantos termos tem."""
+        try:
+            self.session.reload_glossary()
+            lang = self.session.glossary_lang
+            nome = LANGUAGES.get(lang, lang)
+            if self.session.glossary_offer() is not None:
+                txt = f"{nome}: ainda não tem (será oferecido ao traduzir)"
+            elif not self.session.glossary.terms:
+                txt = f"{nome}: vazio"
+            else:
+                txt = f"{nome}: {len(self.session.glossary.terms)} termos"
+            self.gloss_var.set(i18n.tr(txt))
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _glossary_checkpoint(self, gate: bool) -> bool:
+        """Se o idioma de destino não tem glossário, pergunta antes. Devolve False se a pessoa cancelou a tradução."""
+        try:
+            self.session.reload_glossary()
+            offer = self.session.glossary_offer()
+        except Exception:  # noqa: BLE001
+            return True
+        if offer is None:
+            return True
+        dlg = GlossaryOfferDialog(self.root, self.session, offer, gate)
+        self.root.wait_window(dlg.win)
+        self.refresh_glossary_label()
+        return dlg.result != "cancel"
 
     def _set_idioma_column(self, show: bool) -> None:
         cols = ("estado", "idioma", "original", "traducao") if show else ("estado", "original", "traducao")
@@ -1463,14 +1902,62 @@ class App(ActionsMixin):
                 + f"{self.rate.current:.0f}" + i18n.tr(" · Pico: ") + f"{self.rate.peak:.0f}")
 
     # ---------------------------------------------------------------- passo a passo e dicas
-    def open_tour(self, first_run: bool = False) -> None:
+    def _tut_target(self, key: str):
+        """Parte da janela que o tutorial destaca; None se ela não está visível (o passo é pulado)."""
+        if key == "mods":
+            if self.sidebar.winfo_ismapped():
+                return self.cards.get("mods")
+            return self.btn_drawer if self.btn_drawer.winfo_ismapped() else None
+        if key == "help":
+            return self.btn_help
+        if key == "tutorial":
+            return self.btn_tutorial
+        if key == "settings":
+            return self.btn_settings
+        w = self.cards.get(key) or self.tt.get(key)
+        if w is None:
+            return None
+        if key == "mod_buttons" and not self.sidebar.winfo_ismapped():
+            return None  # a lista de mods está escondida (janela estreita)
+        try:
+            return w if w.winfo_ismapped() else None
+        except tk.TclError:
+            return None
+
+    def open_tutorial_menu(self, first_run: bool = False) -> None:
+        """Janela de boas-vindas: tutorial básico, avançado ou nenhum."""
+        for other in (self.welcome, self.tour):
+            if other is not None:
+                try:
+                    other.win.lift()
+                except tk.TclError:
+                    pass
+                return
+        self.welcome = Welcome(self, first_run)
+
+    def start_tutorial(self, kind: str) -> None:
         if self.tour is not None:
-            try:
-                self.tour.win.lift()
-            except tk.TclError:
-                pass
-            return
-        self.tour = Tour(self, first_run)
+            self.tour.close()
+        self.tour = Tour(self, "advanced" if kind == "advanced" else "basic")
+
+    def open_tour(self, first_run: bool = False) -> None:  # nome antigo
+        self.open_tutorial_menu(first_run)
+
+    def _auto_tip_text(self, w) -> str:
+        """Dica (já no idioma do programa) para um botão/caixa de marcar; "" se não houver."""
+        own = getattr(w, "_tip_text", None)  # dica ligada direto ao widget (setas, idiomas do mod)
+        if own:
+            return i18n.tr(own)
+        try:
+            text = str(w.cget("text"))
+            ctx = getattr(w.winfo_toplevel(), "_tip_ctx", "")
+        except tk.TclError:
+            return ""
+        cands = [getattr(w, "_i18n_text", None), text]  # o texto em português, mesmo com o programa em outro idioma
+        tip = find_tip(ctx, cands, i18n.tr)
+        if not tip:  # frases longas do programa ("Traduzir este mod"…) ficam na tabela antiga
+            tip = next((t for k, t in TIPS_BY_TEXT if any(c and k in c for c in cands)), "")
+        return i18n.tr(tip) if tip else ""
 
     def _attach_tips(self) -> None:
         """Dica ao passar o mouse nos botões e campos principais (texto do widget ou nome do atributo)."""
@@ -1550,6 +2037,29 @@ class App(ActionsMixin):
             threading.Thread(target=self._load_mod_info, args=(self.mod_gen, list(self.entries)), daemon=True).start()
         self.load_mod(p)
 
+    def open_mod_folder(self) -> None:
+        """Abre no Explorer a pasta onde o mod selecionado está (kenshi/mods/<mod> ou a pasta da Workshop)."""
+        sel = self.mod_tree.selection()
+        path = self.entries[int(sel[0])].path if sel and self.entries else self.session.mod_path
+        if path is None:
+            messagebox.showinfo("Pasta do mod", "Selecione um mod na lista primeiro.")
+            return
+        path = Path(path)
+        folder = path if path.is_dir() else path.parent
+        if not folder.is_dir():
+            messagebox.showerror("Pasta do mod", f"Não achei a pasta desse mod: {folder}")
+            return
+        try:
+            if sys.platform == "win32" and path.is_file():
+                subprocess.Popen(["explorer", "/select,", str(path)])  # abre a pasta já com o .mod destacado
+            else:
+                open_with_system(folder)
+        except Exception:  # noqa: BLE001
+            try:
+                open_with_system(folder)
+            except Exception as e:  # noqa: BLE001
+                messagebox.showerror("Pasta do mod", f"Não consegui abrir a pasta: {e}")
+
     def pick_kenshi(self) -> None:
         folder = filedialog.askdirectory(title="Pasta onde o Kenshi está instalado")
         if not folder:
@@ -1619,6 +2129,10 @@ class App(ActionsMixin):
         self.selected = None
         self.refresh_table()
         self.status_var.set(f"{st['pendente']} textos pendentes. Clique em “Traduzir este mod”.")
+        info = proj.update_info
+        if info and info.get("mod_mudou") and (info["novos"] or info["mudaram"]):
+            self.status_var.set(f"O mod foi atualizado: {info['novos']} novos, {info['mudaram']} mudaram. "
+                                "Veja em Ferramentas… > O que mudou.")
         self.eta_var.set("")
 
     # ================================================================ tabela e editor
@@ -1761,6 +2275,8 @@ class App(ActionsMixin):
             provider = self.session.make_provider()
         except (ProviderError, ValueError) as e:
             messagebox.showerror("Serviço", str(e))
+            return None
+        if not self._glossary_checkpoint(gate=True):
             return None
         if retranslate and not messagebox.askyesno(
             "Refazer", "Refazer as traduções automáticas e as marcadas para conferir?\n"
@@ -2054,6 +2570,16 @@ class App(ActionsMixin):
         resumo = (f"Traduzidos: {report.translated}\nDa memória: {report.from_memory}\n"
                   f"Para conferir: {report.attention}\nIgnorados: {report.ignored}\nCom falha: {report.failed}\n"
                   f"Tempo: {fmt_duration(report.seconds) if report.seconds >= 1 else 'menos de 1 s'}")
+        try:
+            from .consistency import glossary_usage
+            used, missed = glossary_usage(self.session.project.units, self.session.glossary) if self.session.project else (0, 0)
+            if used or missed:
+                resumo += f"\n\nGlossário ({self.session.glossary_lang}): {used} textos usam o glossário"
+                if missed:
+                    resumo += f"; {missed} não usaram (veja Ferramentas > Conferir consistência)"
+                resumo += "."
+        except Exception:  # noqa: BLE001 - o resumo nunca pode falhar por causa disso
+            pass
         if report.cancelled:
             resumo = "Parou antes de terminar (o que já foi traduzido está salvo).\n\n" + resumo
         if report.field_notes:
@@ -2136,6 +2662,7 @@ class App(ActionsMixin):
     def open_settings(self) -> None:
         """Configurações gerais, em seções: aparência, avisos, tradução, instalação no jogo, dados e créditos."""
         win = tk.Toplevel(self.root)
+        win._tip_ctx = "config"
         win.title(i18n.tr("Configurações gerais"))
         win.transient(self.root)
         win.configure(bg=BG)
@@ -2173,49 +2700,54 @@ class App(ActionsMixin):
             ttk.Separator(body).grid(row=row[0] + 1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
             row[0] += 2
 
-        def note(text: str, indent: int = 0) -> None:
-            tk.Label(body, text=i18n.tr(text), bg=CARD, fg=MUTED, font=self.f_small, wraplength=wrap - indent,
-                     justify="left").grid(row=row[0], column=0, columnspan=2, sticky="w", padx=(indent, 0), pady=(0, 4))
-            row[0] += 1
+        def tip(widget, text: str) -> None:
+            """Explicação que aparece quando o mouse para em cima (nada de texto cinza embaixo)."""
+            if text:
+                Tip(widget, lambda t=text: i18n.tr(t))
 
         def check(text: str, var: tk.BooleanVar, hint: str = "") -> None:
-            ttk.Checkbutton(body, text=text, variable=var, style="Card.TCheckbutton").grid(
-                row=row[0], column=0, columnspan=2, sticky="w", pady=(4, 0))
+            cb = ttk.Checkbutton(body, text=text, variable=var, style="Card.TCheckbutton")
+            cb.grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(5, 0))
             row[0] += 1
-            if hint:
-                note(hint, indent=24)
+            tip(cb, hint)
 
-        def choice(label: str, var: tk.StringVar, values: list[str], width: int = 30) -> None:
-            ttk.Label(body, text=label, style="Card.TLabel").grid(row=row[0], column=0, sticky="w", pady=(6, 2))
-            ttk.Combobox(body, textvariable=var, values=values, state="readonly", width=width).grid(
-                row=row[0], column=1, sticky="w", padx=12, pady=(6, 2))
+        def choice(label: str, var: tk.StringVar, values: list[str], width: int = 30, hint: str = "") -> None:
+            lab = ttk.Label(body, text=label, style="Card.TLabel")
+            lab.grid(row=row[0], column=0, sticky="w", pady=(6, 2))
+            box = ttk.Combobox(body, textvariable=var, values=values, state="readonly", width=width)
+            box.grid(row=row[0], column=1, sticky="w", padx=12, pady=(6, 2))
             row[0] += 1
+            tip(lab, hint)
+            tip(box, hint)
 
         # ---- Aparência
         heading("Aparência")
         names = list(i18n.LANG_NAMES.values())
         lang_var = tk.StringVar(value=i18n.LANG_NAMES.get(self.cfg.ui_lang, names[0]))
-        choice("Idioma do programa:", lang_var, names)
-        note("Esta é a língua dos menus e botões; não muda o idioma da tradução do mod.")
+        choice("Idioma do programa:", lang_var, names,
+               hint="A língua dos menus e botões. Não muda o idioma da tradução do mod.")
         from .galaxy import THEME_NAMES as FX_NAMES
 
         theme_keys = ["light", "dark", *EFFECT_THEMES, "auto"]
         theme_names = [i18n.tr("Claro"), i18n.tr("Escuro"), *(i18n.tr(FX_NAMES[k]) for k in EFFECT_THEMES),
                        i18n.tr("Seguir o Windows")]
         theme_var = tk.StringVar(value=theme_names[theme_keys.index(self.cfg.theme) if self.cfg.theme in theme_keys else 0])
-        choice("Tema:", theme_var, theme_names)
+        choice("Tema:", theme_var, theme_names, width=34,
+               hint="Cores da janela. Os temas com nome têm uma faixa animada no topo, com degradê e luzes flutuando.")
         font_labels = [f"{i18n.tr(FONT_NAMES[p])} ({p}%)" for p in FONT_STEPS]
         cur_font = clamp_scale(self.cfg.font_scale)
         font_var = tk.StringVar(value=font_labels[FONT_STEPS.index(cur_font)] if cur_font in FONT_STEPS
                                 else f"{cur_font}%")
-        choice("Tamanho da letra:", font_var, font_labels)
+        choice("Tamanho da letra:", font_var, font_labels, hint="Aumenta ou diminui as letras do programa.")
 
         # ---- Avisos
         heading("Avisos")
         notify = tk.BooleanVar(value=self.cfg.notify_switch)
-        check("Avisar quando o programa trocar de serviço", notify)
+        check("Avisar quando o programa trocar de serviço", notify,
+              "Mostra um aviso quando um serviço de tradução falha e o programa passa para outro.")
         done_var = tk.BooleanVar(value=getattr(self.cfg, "notify_done", True))
-        check("Tocar um som e piscar a janela quando a tradução terminar", done_var)
+        check("Tocar um som e piscar a janela quando a tradução terminar", done_var,
+              "Útil em traduções demoradas: você pode usar outro programa e ser avisado quando acabar.")
 
         # ---- Tradução
         heading("Tradução")
@@ -2227,30 +2759,47 @@ class App(ActionsMixin):
         mode_keys = ["completo", "dependente"]
         mode_names = [i18n.tr(MODE_LABELS[k]) for k in mode_keys]
         mode_var = tk.StringVar(value=mode_names[mode_keys.index(self.cfg.translation_mode) if self.cfg.translation_mode in mode_keys else 0])
-        ttk.Label(body, text="Tipo do mod traduzido:", style="Card.TLabel").grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(10, 2))
+        mode_lab = ttk.Label(body, text="Tipo do mod traduzido:", style="Card.TLabel")
+        mode_lab.grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(10, 2))
         row[0] += 1
-        ttk.Combobox(body, textvariable=mode_var, values=mode_names, state="readonly", width=82).grid(
-            row=row[0], column=0, columnspan=2, sticky="w", pady=(0, 4))
+        mode_box = ttk.Combobox(body, textvariable=mode_var, values=mode_names, state="readonly", width=82)
+        mode_box.grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(0, 4))
         row[0] += 1
-        note(MODE_NOTE)
+        plugin_note = ("Mods com plugins (RE_Kenshi, DLLs), como o Second Life of Kenshi: use Dependente. Esses mods procuram os "
+                       "próprios arquivos pelo nome e pela pasta; uma cópia completa com outro nome faz o jogo cair.")
+        for _w in (mode_lab, mode_box):
+            Tip(_w, lambda: i18n.tr(MODE_NOTE) + "\n\n" + i18n.tr(plugin_note))
 
         # ---- Instalação no jogo
         heading("Instalação no jogo")
         images = tk.BooleanVar(value=self.cfg.copy_images)
-        check("Copiar todos os arquivos do mod original ao instalar (modelos, texturas, .info, imagem)", images)
+        check("Copiar todos os arquivos do mod original ao instalar (modelos, texturas, .info, imagem)", images,
+              "Modo Completo: copia a pasta inteira do original para a pasta do mod traduzido. "
+              "Modo Dependente: copia só a imagem.")
         txtfiles = tk.BooleanVar(value=self.cfg.translate_text_files)
-        check("Traduzir as dicas de carregamento do mod (tips.txt e outros .txt de frases)", txtfiles)
+        check("Traduzir as dicas de carregamento do mod (tips.txt e outros .txt de frases)", txtfiles,
+              "Vale para o modo Completo. As dicas aparecem na tela de carregamento do jogo.")
+        tipsdep = tk.BooleanVar(value=self.cfg.translate_tips_dependent)
+        check("Modo Dependente: levar também tips.txt e names*.txt", tipsdep,
+              "Além do .mod e da imagem, coloca na pasta da tradução o tips.txt (traduzido) e as listas de nomes "
+              "namesM/namesF/namesMF.txt (copiadas sem traduzir). A pasta do mod original nunca é tocada.")
+        latin = tk.BooleanVar(value=self.cfg.latinize_names)
+        check("Nomes em outro alfabeto: trocar por letras latinas (só quando detectar)", latin,
+              "Se as listas namesM/namesF estiverem em russo, grego, japonês, coreano ou chinês e o idioma de destino "
+              "usa letras latinas, os nomes são convertidos para letras latinas (o jogo não desenha outros alfabetos, "
+              "e os nomes ficariam invisíveis). Nomes que já estão em letras latinas não são mexidos. Só vale para o modo Dependente.")
         localefiles = tk.BooleanVar(value=self.cfg.translate_locale_files)
         check("Mods com pasta locale: montar o idioma completo", localefiles,
-              "Corrige menu, falas e tela de início que ficam em inglês em mods como o Project Kathun, e traduz as "
+              "Vale para o modo Completo. Corrige menu, falas e tela de início que ficam em inglês em mods como o Project Kathun, e traduz as "
               "frases do próprio mod. O original da pasta locale fica guardado como locale_off.")
 
         # ---- Dados e créditos
         heading("Dados e créditos")
-        ttk.Button(body, text="Limpar dados…", command=lambda: self.open_cleanup(win)).grid(
-            row=row[0], column=0, sticky="w", pady=(4, 2))
+        clean_btn = ttk.Button(body, text="Limpar dados…", command=lambda: self.open_cleanup(win))
+        clean_btn.grid(row=row[0], column=0, sticky="w", pady=(4, 2))
         row[0] += 1
-        note("Apaga projetos, memória de tradução e cópias do programa (você escolhe o quê). Os mods não são alterados.")
+        tip(clean_btn, "Apaga projetos, memória de tradução e cópias do programa (você escolhe o quê). "
+                       "Os mods não são alterados.")
         credits = tk.Label(body, text=i18n.tr(CREDITS_TEXT), bg=CARD, fg=MUTED, font=self.f_small, wraplength=wrap,
                            justify="left", cursor="hand2")
         credits.grid(row=row[0], column=0, columnspan=2, sticky="w", pady=(14, 0))
@@ -2264,6 +2813,8 @@ class App(ActionsMixin):
             self.cfg.notify_switch = bool(notify.get())
             self.cfg.copy_images = bool(images.get())
             self.cfg.translate_text_files = bool(txtfiles.get())
+            self.cfg.translate_tips_dependent = bool(tipsdep.get())
+            self.cfg.latinize_names = bool(latin.get())
             self.cfg.translate_locale_files = bool(localefiles.get())
             self.cfg.safe_record_types = bool(safetypes.get())
             self.cfg.notify_done = bool(done_var.get())
@@ -2297,6 +2848,7 @@ class App(ActionsMixin):
             return
         items = cleanup.scan(self.session.data_folder)
         win = tk.Toplevel(parent or self.root)
+        win._tip_ctx = "limpar"
         win.title(i18n.tr("Limpar dados"))
         win.transient(parent or self.root)
         win.resizable(False, False)
@@ -2410,33 +2962,86 @@ class App(ActionsMixin):
                 messagebox.showerror("Kenshi", "Não achei a pasta do Kenshi.")
                 return
             dirs = self.session.locate_game()
-        if not messagebox.askyesno(
-            "Instalar no jogo",
-            f"Isto vai:\n• instalar o mod traduzido em {dirs.kenshi / 'mods'}, com o MESMO nome do original “{proj.mod_name}” "
-            f"(ele ocupa o lugar do original no jogo)\n• guardar o original como “{proj.mod_name}.original” "
-            f"nessa mesma pasta, se ainda não houver\n• garantir que “{proj.mod_name}” está ativo em data/mods.cfg "
-            "(é feito um backup do mods.cfg antes).\n\nContinuar?"):
+        dependent = self.cfg.translation_mode == "dependente"
+        if dependent:
+            ask = (f"Isto vai instalar a tradução DEPENDENTE em {dirs.kenshi / 'mods'}: um arquivo pequeno com o idioma no nome, "
+                   f"que precisa do original “{proj.mod_name}” instalado e ativo.\n• o original NÃO é alterado nem copiado\n"
+                   "• a tradução é ativada em data/mods.cfg depois do original (é feito um backup do mods.cfg antes).\n\nContinuar?")
+        else:
+            ask = (f"Isto vai:\n• instalar o mod traduzido em {dirs.kenshi / 'mods'}, com o MESMO nome do original “{proj.mod_name}” "
+                   f"(ele ocupa o lugar do original no jogo)\n• guardar o original como “{proj.mod_name}.original” "
+                   f"nessa mesma pasta, se ainda não houver\n• garantir que “{proj.mod_name}” está ativo em data/mods.cfg "
+                   "(é feito um backup do mods.cfg antes).\n\nContinuar?")
+        if not messagebox.askyesno("Instalar no jogo", ask):
             return
-        try:
-            res = self.session.build(self.session.default_output_folder)
-            if res.problems:  # arquivo gerado com defeito: NÃO instala por cima do mod do jogo
-                messagebox.showerror("Não instalei",
-                                     "O mod gerado não passou na conferência, então nada foi instalado no jogo:\n- "
-                                     + "\n- ".join(res.problems[:8]))
+
+        # roda em outra linha: copiar pastas grandes ou traduzir arquivos de idioma não pode travar a janela
+        box = tk.Toplevel(self.root)
+        box.title(i18n.tr("Instalando no jogo"))
+        box.transient(self.root)
+        box.resizable(False, False)
+        box.configure(bg=BG)
+        body = ttk.Frame(box, style="Card.TFrame", padding=20)
+        body.pack(fill="both", expand=True, padx=12, pady=12)
+        ttk.Label(body, text="Instalando no jogo… pode demorar em mods grandes. Não feche o programa.",
+                  style="Card.TLabel").pack(anchor="w")
+        bar = ttk.Progressbar(body, mode="indeterminate", length=380)
+        bar.pack(fill="x", pady=(12, 0))
+        bar.start(12)
+        i18n.apply(box)
+        box.protocol("WM_DELETE_WINDOW", lambda: None)
+        box.grab_set()
+        box.update_idletasks()
+        sw, sh = box.winfo_screenwidth(), box.winfo_screenheight()
+        box.geometry(f"+{(sw - box.winfo_reqwidth()) // 2}+{(sh - box.winfo_reqheight()) // 3}")
+        out: dict = {}
+
+        def work() -> None:
+            try:
+                res = self.session.build(self.session.default_output_folder)
+                out["res"] = res
+                if not res.problems:  # arquivo gerado com defeito: NÃO instala por cima do mod do jogo
+                    out["dest"], out["changed"] = self.session.install(res.path)
+            except Exception as e:  # noqa: BLE001
+                out["err"] = e
+
+        worker = threading.Thread(target=work, daemon=True)
+        worker.start()
+
+        def poll() -> None:
+            if worker.is_alive():
+                self.root.after(150, poll)
                 return
-            dest, changed = self.session.install(res.path)
-        except Exception as e:  # noqa: BLE001
-            messagebox.showerror("Não consegui instalar", str(e))
+            bar.stop()
+            box.destroy()
+            self._install_done(out, proj)
+
+        self.root.after(150, poll)
+
+    def _install_done(self, out: dict, proj) -> None:
+        if "err" in out:
+            messagebox.showerror("Não consegui instalar", str(out["err"]))
             return
-        extra = "" if not res.problems else "\n\nAtenção, a conferência achou:\n- " + "\n- ".join(res.problems[:8])
+        res = out["res"]
+        if res.problems:
+            messagebox.showerror("Não instalei",
+                                 "O mod gerado não passou na conferência, então nada foi instalado no jogo:\n- "
+                                 + "\n- ".join(res.problems[:8]))
+            return
+        dest, changed = out["dest"], out["changed"]
         note = install_notice(self.session.last_install, proj.mod_name) if self.session.last_install else ""
+        lat = getattr(self.session, "last_latinized", {})
+        if lat:
+            note = (note + "\n\n" if note else "") + i18n.tr("Nomes em outro alfabeto convertidos para letras latinas:") + " " + ", ".join(
+                f"{k} ({v})" for k, v in lat.items())
         messagebox.showinfo("Instalado", f"{dest}\n\n" + ("mods.cfg atualizado." if changed else "mods.cfg já tinha o mod.")
-                            + (f"\n\n{i18n.tr(note)}" if note else "") + extra)
+                            + (f"\n\n{i18n.tr(note)}" if note else ""))
         self.status_var.set("Instalado. Abra o Kenshi para testar.")
 
     # ================================================================ glossário / PO
     def open_glossary(self) -> None:
-        GlossaryDialog(self.root, self.session)
+        dlg = GlossaryDialog(self.root, self.session)
+        dlg.win.bind("<Destroy>", lambda e: self.root.after(50, self.refresh_glossary_label) if e.widget is dlg.win else None)
 
     def export_po(self) -> None:
         if not self._ensure_project():
@@ -2482,18 +3087,23 @@ class GlossaryDialog:
 
     def __init__(self, parent: tk.Tk, session: Session) -> None:
         self.session = session
-        self.path = session.ensure_glossary_file()
+        self.lang_name = LANGUAGES.get(session.glossary_lang, session.glossary_lang)
+        # Português: cria o arquivo a partir do padrão para editar. Outros idiomas: o arquivo nasce quando salvar
+        # (assim a oferta de presets do idioma não some só por abrir esta janela).
+        self.path = session.ensure_glossary_file() if session.glossary_lang == "pt-BR" else session.glossary_file
         session.reload_glossary()
         self.glossary = session.glossary
         self.win = tk.Toplevel(parent)
-        self.win.title("Glossário")
+        self.win._tip_ctx = "glossario"
+        self.win.title(f"Glossário · {self.lang_name}")
         self.win.geometry("640x520")
         self.win.transient(parent)
         self.win.configure(bg=BG)
 
         tk.Label(self.win, bg=BG, fg=MUTED, justify="left", wraplength=600, text=(
-            "Termos que devem sair sempre do mesmo jeito. Deixe a tradução vazia para NÃO traduzir o termo "
-            "(bom para nomes de lugares e facções).")).pack(anchor="w", padx=12, pady=(12, 6))
+            f"Glossário de {self.lang_name}: cada idioma de destino tem o seu, e este é o que vale quando você traduz para "
+            f"{self.lang_name}. Termos que devem sair sempre do mesmo jeito. Deixe a tradução vazia para NÃO traduzir "
+            "o termo (bom para nomes de lugares e facções).")).pack(anchor="w", padx=12, pady=(12, 6))
 
         mid = ttk.Frame(self.win)
         mid.pack(fill="both", expand=True, padx=12)
@@ -2519,6 +3129,7 @@ class GlossaryDialog:
         bar.pack(fill="x", padx=12, pady=(0, 12))
         ttk.Button(bar, text="Adicionar / atualizar", command=self.add).pack(side="left")
         ttk.Button(bar, text="Remover", command=self.remove).pack(side="left", padx=6)
+        ttk.Button(bar, text="Presets do Kenshi…", command=self.open_presets).pack(side="left", padx=6)
         ttk.Button(bar, text="Fechar", command=self.win.destroy).pack(side="right")
         self.fill()
         i18n.apply(self.win)
@@ -2556,6 +3167,166 @@ class GlossaryDialog:
         self.term.set("")
         self.tl.set("")
 
+    def open_presets(self) -> None:
+        PresetsDialog(self.win, self.glossary, self.session.cfg.target_lang, on_done=self._presets_applied)
+
+    def _presets_applied(self) -> None:
+        self.save()
+        self.fill()
+
+
+class GlossaryOfferDialog:
+    """Aparece quando o idioma de destino ainda não tem glossário: cada idioma tem o seu, para não misturar."""
+
+    def __init__(self, parent, session: Session, offer: dict, gate: bool) -> None:
+        self.session, self.offer, self.gate = session, offer, gate
+        self.result = "cancel" if gate else "later"
+        nome = LANGUAGES.get(offer["lang"], offer["lang"])
+        self.win = tk.Toplevel(parent)
+        self.win._tip_ctx = "glossario_oferta"
+        self.win.title(f"{i18n.tr('Glossário')} · {nome}")
+        self.win.transient(parent)
+        self.win.configure(bg=BG)
+        self.win.resizable(False, False)
+        paras = [f"Você vai traduzir para {nome}. Cada idioma de destino tem o seu próprio glossário, "
+                 "para não misturar nomes de idiomas diferentes."]
+        others = session.other_glossaries()
+        if others:
+            lista = ", ".join(f"{LANGUAGES.get(c, c)} ({n} termos)" for c, n in others)
+            paras.append(f"Seus outros glossários continuam guardados e voltam quando você escolher o idioma deles: {lista}.")
+        if offer["official"]:
+            paras.append(f"Para {nome} ainda não existe glossário. Posso criar um com os nomes oficiais do Kenshi em {nome}: "
+                         f"cidades, facções e personagens com nome ({offer['total']} termos).")
+            go = "Criar com os nomes oficiais"
+        else:
+            paras.append(f"Para {nome} ainda não existe glossário, e o Kenshi não tem tradução oficial nesse idioma. "
+                         f"Posso criar um que mantém os nomes originais em inglês ({offer['total']} nomes de cidades, "
+                         "facções e personagens). Isso é uma escolha do programa, não uma regra oficial.")
+            go = "Criar mantendo os nomes originais"
+        body = ttk.Frame(self.win)
+        body.pack(fill="both", expand=True, padx=16, pady=(14, 4))
+        for p in paras:
+            tk.Label(body, bg=BG, fg=INK, justify="left", wraplength=500, text=i18n.tr(p)).pack(anchor="w", pady=(0, 8))
+        tk.Label(body, bg=BG, fg=MUTED, justify="left", wraplength=500, text=i18n.tr(
+            "Sem glossário, os nomes do jogo passam pelo tradutor como qualquer outra palavra e podem sair diferentes "
+            "do Kenshi original.")).pack(anchor="w")
+        bar = ttk.Frame(self.win)
+        bar.pack(fill="x", padx=16, pady=14)
+        ttk.Button(bar, text=go, style="Accent.TButton", command=self._go).pack(side="left")
+        ttk.Button(bar, text="Escolher presets…", command=self._choose).pack(side="left", padx=8)
+        if gate:
+            ttk.Button(bar, text="Cancelar", command=self.win.destroy).pack(side="right")
+            ttk.Button(bar, text="Traduzir sem glossário", command=self._none).pack(side="right", padx=8)
+        else:
+            ttk.Button(bar, text="Agora não", command=self.win.destroy).pack(side="right")
+        i18n.apply(self.win)
+        try:
+            self.win.update_idletasks()
+            self.win.grab_set()
+            self.win.focus_set()
+        except tk.TclError:
+            pass
+
+    def _go(self) -> None:
+        self.session.accept_glossary_offer()
+        self.result = "created"
+        self.win.destroy()
+
+    def _none(self) -> None:
+        self.session.decline_glossary_offer()
+        self.result = "none"
+        self.win.destroy()
+
+    def _choose(self) -> None:
+        g = self.session.glossary
+        done: list[int] = []
+
+        def saved() -> None:
+            g.save(self.session.glossary_file)
+            self.session.reload_glossary()
+            done.append(1)
+
+        pd = PresetsDialog(self.win, g, self.offer["lang"], on_done=saved)
+        self.win.wait_window(pd.win)
+        if done and self.session.glossary.terms:
+            self.result = "chosen"
+            self.win.destroy()
+
+
+class PresetsDialog:
+    """Presets de glossário com os nomes oficiais do Kenshi (cidades, facções, personagens, armas, itens...)."""
+
+    def __init__(self, parent, glossary: Glossary, target_lang: str, on_done) -> None:
+        self.glossary = glossary
+        self.on_done = on_done
+        self.presets, self.official = presets_for(target_lang)
+        self.win = tk.Toplevel(parent)
+        self.win._tip_ctx = "presets"
+        self.win.title("Presets do Kenshi")
+        self.win.geometry("660x640")
+        self.win.minsize(520, 420)
+        self.win.transient(parent)
+        self.win.configure(bg=BG)
+        tk.Label(self.win, bg=BG, fg=MUTED, justify="left", wraplength=620, text=(
+            f"Nomes como aparecem no Kenshi original em {LANGUAGES.get(target_lang, target_lang)}. Marque os que quer e clique em Adicionar. "
+            "Termos que você já tem no glossário não são trocados, a não ser que marque a opção abaixo. "
+            "Nome sem tradução aparece como \"(manter como está)\": o programa não o traduz.")).pack(anchor="w", padx=12, pady=(12, 6))
+        self.vars: dict[str, tk.BooleanVar] = {}
+        # Parte de baixo primeiro (botões sempre visíveis); a lista de presets rola no meio.
+        bar = ttk.Frame(self.win)
+        bar.pack(fill="x", padx=12, pady=12, side="bottom")
+        ttk.Button(bar, text="Adicionar ao glossário", command=self.apply).pack(side="left")
+        ttk.Button(bar, text="Marcar todos", command=lambda: self._marcar(True)).pack(side="left", padx=6)
+        ttk.Button(bar, text="Desmarcar", command=lambda: self._marcar(False)).pack(side="left")
+        ttk.Button(bar, text="Fechar", command=self.win.destroy).pack(side="right")
+        self.status = tk.StringVar(value="")
+        tk.Label(self.win, bg=BG, fg=MUTED, textvariable=self.status, justify="left", wraplength=620).pack(
+            anchor="w", padx=12, pady=(4, 0), side="bottom")
+        self.overwrite = tk.BooleanVar(value=False)
+        ttk.Checkbutton(self.win, text="Trocar também os termos que já existem no meu glossário",
+                        variable=self.overwrite).pack(anchor="w", padx=12, pady=(6, 0), side="bottom")
+        if not self.official:
+            tk.Label(self.win, bg=BG, fg=MUTED, wraplength=620, justify="left", text=(
+                f"O Kenshi não tem tradução oficial em {target_lang}, então não há nomes oficiais para este idioma. "
+                "Só existe o preset que mantém os nomes originais (em inglês). Isso é uma escolha, não uma regra oficial.")).pack(
+                anchor="w", padx=12, pady=(6, 0), side="bottom")
+        area = ttk.Frame(self.win)
+        area.pack(fill="both", expand=True, padx=12)
+        canvas = tk.Canvas(area, bg=BG, highlightthickness=0)
+        sb = ttk.Scrollbar(area, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=sb.set)
+        sb.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        box = ttk.Frame(canvas)
+        janela = canvas.create_window((0, 0), window=box, anchor="nw")
+        box.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfigure(janela, width=e.width))
+        self.win.bind("<MouseWheel>", lambda e: canvas.yview_scroll(-1 if e.delta > 0 else 1, "units"))
+        for p in self.presets:
+            v = tk.BooleanVar(value=False)
+            self.vars[p["id"]] = v
+            ttk.Checkbutton(box, text=f"{p['nome']}  ({p['total']} termos)", variable=v).pack(anchor="w", pady=(6, 0))
+            tk.Label(box, bg=BG, fg=MUTED, justify="left", wraplength=560, text=p["descricao"]).pack(anchor="w", padx=(24, 0))
+        if not self.presets:
+            tk.Label(box, bg=BG, fg=MUTED, text="Nenhum preset encontrado nesta instalação.").pack(anchor="w", pady=12)
+        i18n.apply(self.win)
+
+    def _marcar(self, valor: bool) -> None:
+        for v in self.vars.values():
+            v.set(valor)
+
+    def apply(self) -> None:
+        chosen = [pid for pid, v in self.vars.items() if v.get()]
+        if not chosen:
+            self.status.set("Marque pelo menos um preset.")
+            return
+        added = updated = skipped = 0
+        for pid in chosen:
+            a, u, s = self.glossary.merge(load_preset(pid), overwrite=self.overwrite.get())
+            added, updated, skipped = added + a, updated + u, skipped + s
+        self.on_done()
+        self.status.set(f"Pronto. Novos: {added}. Trocados: {updated}. Que você já tinha e foram mantidos: {skipped}.")
+
 
 class ServicesDialog:
     """Serviços do agregado: IAs no formato OpenAI (URL, chave e modelo editáveis), DeepL, Google Cloud, LibreTranslate."""
@@ -2563,6 +3334,7 @@ class ServicesDialog:
     def __init__(self, parent: tk.Tk, cfg) -> None:
         self.cfg = cfg
         self.win = tk.Toplevel(parent)
+        self.win._tip_ctx = "servicos"
         self.win.title("Serviços do agregado")
         self.win.geometry("740x820")
         self.win.transient(parent)
@@ -2603,8 +3375,12 @@ class ServicesDialog:
         self.free_tree.pack(side="left")
         fb = ttk.Frame(rf)
         fb.pack(side="left", padx=6)
-        ttk.Button(fb, text="▲", width=3, command=lambda: self.free_move(-1)).pack(pady=1)
-        ttk.Button(fb, text="▼", width=3, command=lambda: self.free_move(1)).pack(pady=1)
+        b_up = ttk.Button(fb, text="▲", width=3, command=lambda: self.free_move(-1))
+        b_up.pack(pady=1)
+        b_up._tip_text = TIP_FREE_UP
+        b_down = ttk.Button(fb, text="▼", width=3, command=lambda: self.free_move(1))
+        b_down.pack(pady=1)
+        b_down._tip_text = TIP_FREE_DOWN
         self.free_tree.bind("<Double-1>", self.free_toggle)
         order = [k for k in cfg.free_order if k in FREE_CLASSES]
         self.free_state = [[k, True] for k in order] + [[k, False] for k in DEFAULT_ORDER if k not in order]
@@ -2647,8 +3423,12 @@ class ServicesDialog:
         ttk.Button(bar, text="Testar este", command=self.test_one).pack(side="left")
         ttk.Button(bar, text="Testar todos", command=self.test_all).pack(side="left", padx=(6, 0))
         ttk.Button(bar, text="Remover", command=self.remove).pack(side="left", padx=6)
-        ttk.Button(bar, text="▲", width=3, command=lambda: self.move(-1)).pack(side="left")
-        ttk.Button(bar, text="▼", width=3, command=lambda: self.move(1)).pack(side="left", padx=2)
+        m_up = ttk.Button(bar, text="▲", width=3, command=lambda: self.move(-1))
+        m_up.pack(side="left")
+        m_up._tip_text = TIP_LIST_UP
+        m_down = ttk.Button(bar, text="▼", width=3, command=lambda: self.move(1))
+        m_down.pack(side="left", padx=2)
+        m_down._tip_text = TIP_LIST_DOWN
         ttk.Button(bar, text="Fechar", command=self.win.destroy).pack(side="right")
         tk.Label(self.win, bg=BG, fg=MUTED, justify="left", wraplength=660, anchor="w", text=(
             "Mais de uma chave do mesmo serviço? Separe com ;  Os nomes de modelo e as URLs são sugestões tiradas das "
@@ -2840,11 +3620,50 @@ class ServicesDialog:
 
 
 def _definir_icone(root: tk.Tk) -> None:
-    """Ícone da janela e da barra de tarefas (funciona no .exe e rodando pelo Python)."""
+    """Ícone da janela e da barra de tarefas (funciona no .exe e rodando pelo Python).
+
+    No Windows o Tk escolhe um único tamanho do .ico e o estica (fica pixelado). Por isso
+    pedimos ao próprio Windows o tamanho certo (pequeno e grande) com LoadImage/WM_SETICON.
+    """
     pasta = Path(__file__).resolve().parent
+    ico = pasta / "icone.ico"
     try:
         if sys.platform == "win32":
-            root.iconbitmap(default=str(pasta / "icone.ico"))
+            import ctypes
+            from ctypes import wintypes
+
+            user32 = ctypes.windll.user32
+            user32.LoadImageW.restype = wintypes.HANDLE
+            user32.LoadImageW.argtypes = [wintypes.HINSTANCE, wintypes.LPCWSTR, wintypes.UINT,
+                                          ctypes.c_int, ctypes.c_int, wintypes.UINT]
+            user32.SendMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+            root.iconbitmap(default=str(ico))  # impede o Tk de usar a "pena" azul padrão
+
+            def aplicar() -> None:
+                try:
+                    hwnd = user32.GetParent(root.winfo_id()) or root.winfo_id()
+                    try:
+                        dpi = user32.GetDpiForWindow(hwnd) or 96
+                    except Exception:  # noqa: BLE001  (Windows antigo)
+                        dpi = 96
+                    win11 = getattr(sys.getwindowsversion(), "build", 0) >= 22000
+                    # Tamanho EXATO da barra de tarefas (24 px no Win11, 32 px no Win10, a 100%).
+                    # Se o Windows precisar redimensionar, o ícone fica borrado.
+                    grande = round((24 if win11 else 32) * dpi / 96)
+                    pequeno = round(16 * dpi / 96)
+                    icones = []
+                    for tipo, tam in ((1, grande), (0, pequeno)):  # 1 = ICON_BIG, 0 = ICON_SMALL
+                        h = user32.LoadImageW(None, str(ico), 1, tam, tam, 0x10)  # IMAGE_ICON, LR_LOADFROMFILE
+                        if h:
+                            user32.SendMessageW(hwnd, 0x0080, tipo, h)  # WM_SETICON
+                            icones.append(h)
+                    root._icones_win = icones  # mantém vivos
+                except Exception:  # noqa: BLE001  (fica com o ícone do iconbitmap)
+                    pass
+
+            # O Tk reaplica o ícone dele quando a janela aparece; por isso aplicamos de novo depois.
+            for ms in (50, 300, 1000):
+                root.after(ms, aplicar)
         else:
             root.iconphoto(True, tk.PhotoImage(file=str(pasta / "icone.png")))
     except Exception:  # noqa: BLE001  (sem ícone o programa funciona igual)
@@ -2857,6 +3676,12 @@ def run() -> None:
             import ctypes
 
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:  # noqa: BLE001
+            pass
+        try:  # barra de tarefas usa o ícone do programa, não o do Python
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Canela.KenshiQuickTranslator")
         except Exception:  # noqa: BLE001
             pass
     root = tk.Tk()
