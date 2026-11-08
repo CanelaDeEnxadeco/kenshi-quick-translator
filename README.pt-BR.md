@@ -18,8 +18,7 @@
 
 Programa de janela para Windows que **lê o `.mod`**, **traduz todos os textos** (diálogos, nomes, descrições…), deixa você **revisar lado a lado** e **instala a tradução direto no Kenshi**, sem nunca alterar o arquivo original.
 
-<!-- 📸 COLOQUE AQUI um print da tela principal: docs/img/tela-principal.png -->
-<!-- ![Tela principal](docs/img/tela-principal.png) -->
+![Janela principal](docs/img/main-window.png)
 
 </div>
 
@@ -64,7 +63,6 @@ _Reúne tudo desde a 0.7.1 (esta versão já inclui da 0.7.2 à 0.7.5)._
 - 🧾 No fim da tradução, o resumo diz quantos textos usam o glossário e quantos tinham um termo do glossário mas não o usaram.
 - 🐞 A janela não fecha mais ao trocar o idioma de origem do mod (os erros aparecem na barra de status e vão para o registro).
 
-> ⚠️ A janela foi conferida numa tela virtual de Linux (capturas) e com testes automáticos. **Ainda não foi conferida no Windows com zoom de 125 a 175 %.** Se algo aparecer cortado ou fora do lugar, abra uma *issue* com uma captura de tela.
 
 ## 🆕 Novidades da 0.7.1
 _Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9 e a 0.7.0)._
@@ -78,7 +76,6 @@ _Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9 e a 0.7.0)._
 - 💾 **Salvar o projeto não falha mais com "Acesso negado"** (0.6.9). Quando o antivírus, a sincronização na nuvem ou outra cópia segura o arquivo por um instante, o programa tenta de novo e, se preciso, grava direto.
 - 🌑 A janela não pisca clara ao abrir em tema escuro.
 
-> ⚠️ A faixa animada e a nova janela de Configurações foram conferidas em tela virtual e com testes, não em todo tipo de Windows. Se algo ficar estranho, abra uma issue com um print.
 
 ## 🆕 Novidades da 0.6.8
 
@@ -114,21 +111,13 @@ _Reúne tudo desde a 0.6.8 (esta versão já inclui a 0.6.9 e a 0.7.0)._
 
 ## 🖼️ Capturas de tela
 
-> 📸 *Adicione aqui os seus prints na pasta `docs/img/` e descomente as linhas abaixo.*
-
-<!--
-| Lista de mods | Como traduzir |
+| Janela principal | Traduzindo |
 |---|---|
-| ![Lista](docs/img/lista-de-mods.png) | ![Traduzir](docs/img/como-traduzir.png) |
+| ![Janela principal](docs/img/main-window.png) | ![Traduzindo](docs/img/translating.png) |
 
-| Revisão | Configurações |
+| Configurações e temas | Tutoriais |
 |---|---|
-| ![Revisão](docs/img/revisao.png) | ![Configurações](docs/img/configuracoes.png) |
-
-| Serviços do agregado | Modo escuro |
-|---|---|
-| ![Serviços](docs/img/servicos.png) | ![Escuro](docs/img/modo-escuro.png) |
--->
+| ![Configurações e temas](docs/img/settings-themes.png) | ![Tutoriais](docs/img/tutorial-welcome.png) |
 
 ---
 
@@ -485,7 +474,6 @@ Este projeto nasceu de uma vontade simples: **traduzir mods do Kenshi sem sofrim
 - 🌐 O detector de idioma não separa português do Brasil do de Portugal; textos curtos em alfabeto latino ("Maybe.") não têm como ser decididos com certeza (vão com o idioma automático do serviço).
 - 🎯 O programa só traduz o que **o próprio mod** contém. Linhas do jogo original que o mod apenas *referencia* (aparecem em azul no FCS) não podem ser traduzidas por ele.
 - 🚫 Não traduz para dois idiomas de destino ao mesmo tempo: traduza duas vezes, trocando o idioma. Cada idioma guarda o seu projeto.
-- 🖥️ O layout da janela foi conferido numa tela virtual de Linux, **ainda não no Windows com zoom de 125 a 175 %**.
 - 🏷️ Os presets do glossário vêm dos arquivos do próprio jogo; a lista de personagens é automática e aproximada, e russo e japonês não separam livros de itens.
 - 🈯 As traduções da interface em **russo e chinês** foram feitas por IA, sem revisão de falante nativo. Correções são bem-vindas.
 - ⏱️ O tempo de um mod grande depende do serviço escolhido e do limite da conta; não dá para prometer um número.

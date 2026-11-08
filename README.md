@@ -18,8 +18,7 @@
 
 A Windows desktop program that **reads the `.mod` file**, **translates every text** (dialogue, names, descriptions…), lets you **review it side by side**, and **installs the translation straight into Kenshi** — without ever touching the original file.
 
-<!-- 📸 PUT A MAIN-SCREEN SCREENSHOT HERE: docs/img/main-screen.png -->
-<!-- ![Main screen](docs/img/main-screen.png) -->
+![Main window](docs/img/main-window.png)
 
 </div>
 
@@ -64,7 +63,6 @@ _Covers everything since 0.7.1 (this release also includes 0.7.2 to 0.7.5)._
 - 🧾 At the end of a translation, the summary says how many texts use the glossary and how many had a glossary term but did not use it.
 - 🐞 The window no longer closes when you change the mod's source language (errors now show in the status bar and go to the log).
 
-> ⚠️ The window was checked on a virtual Linux screen (screenshots) and with unit tests. **It was not yet checked on Windows with 125–175 % screen scaling.** If something looks cut off or out of place, open an issue with a screenshot.
 
 ## 🆕 What's new in 0.7.1
 _Covers everything since 0.6.8 (this release also includes 0.6.9 and 0.7.0)._
@@ -78,7 +76,6 @@ _Covers everything since 0.6.8 (this release also includes 0.6.9 and 0.7.0)._
 - 💾 **Saving a project no longer fails with "Access denied"** (0.6.9). When antivirus, cloud sync or another copy holds the file for a moment, the program retries and, if needed, writes directly.
 - 🌑 The window no longer flashes light when it opens in a dark theme.
 
-> ⚠️ The animated banner and the new Settings window were checked on a virtual screen and with unit tests, not on every Windows setup. If something looks off, open an issue with a screenshot.
 
 ## 🆕 What's new in 0.6.8
 
@@ -114,21 +111,13 @@ _Covers everything since 0.6.8 (this release also includes 0.6.9 and 0.7.0)._
 
 ## 🖼️ Screenshots
 
-> 📸 *Add your screenshots to the `docs/img/` folder and uncomment the lines below.*
-
-<!--
-| Mod list | How to translate |
+| Main window | Translating |
 |---|---|
-| ![List](docs/img/mod-list.png) | ![Translate](docs/img/how-to-translate.png) |
+| ![Main window](docs/img/main-window.png) | ![Translating](docs/img/translating.png) |
 
-| Review | Settings |
+| Settings and themes | Tutorials |
 |---|---|
-| ![Review](docs/img/review.png) | ![Settings](docs/img/settings.png) |
-
-| Aggregate services | Dark mode |
-|---|---|
-| ![Services](docs/img/services.png) | ![Dark](docs/img/dark-mode.png) |
--->
+| ![Settings and themes](docs/img/settings-themes.png) | ![Tutorials](docs/img/tutorial-welcome.png) |
 
 ---
 
@@ -485,7 +474,6 @@ This project started from a simple wish: **translate Kenshi mods without the pai
 - 🌐 The language detector can't tell Brazilian from European Portuguese; short Latin-alphabet texts ("Maybe.") can't be decided with certainty (they go with the service's automatic language).
 - 🎯 The program only translates what **the mod itself** contains. Lines from the base game that the mod merely *references* (shown in blue in the FCS) cannot be translated by it.
 - 🚫 It can't translate into two target languages at once: translate twice, changing the language. Each language keeps its own project.
-- 🖥️ The window layout was checked on a virtual Linux screen, **not yet on Windows with 125–175 % scaling**.
 - 🏷️ The glossary presets come from the game's own files; the character list is automatic and approximate, and Russian and Japanese do not separate books from items.
 - 🈯 The **Russian and Chinese** interface translations were made by AI, without a native speaker's review. Corrections are welcome.
 - ⏱️ How long a large mod takes depends on the chosen service and your account's limits; no number can be promised.
